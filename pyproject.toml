@@ -1,0 +1,20 @@
+[project]
+name = "tab-cli"
+version = "0.1.0"
+description = "A CLI tool for tabular data"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fire>=0.5",
+    "rich>=13.0",
+    "polars>=1.0",
+    "pyarrow>=15.0",
+    "blobfile>=3.0",
+]
+
+[project.scripts]
+tab = "tab_cli.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
