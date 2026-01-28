@@ -1,9 +1,10 @@
 # tab
 
-A fast CLI tool for viewing, querying, and converting tabular data files.
+A CLI tool for viewing, querying, and converting tabular data files.
 
 ## Supported Formats
  - Parquet
+ - Avro
  - CSV
  - TSV
  - Jsonl

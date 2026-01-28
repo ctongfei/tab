@@ -12,6 +12,7 @@ dependencies = [
     "polars>=1.0",
     "pyarrow>=15.0",
     "blobfile>=3.0",
+    "polars-fastavro>=0.5.1",
 ]
 
 [project.scripts]

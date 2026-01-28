@@ -5,6 +5,7 @@ from tab_cli.handlers.cli_table import CliTableFormatter
 from tab_cli.handlers.csv import CsvHandler
 from tab_cli.handlers.directory import DirectoryReader
 from tab_cli.handlers.jsonl import JsonlHandler
+from tab_cli.handlers.avro import AvroHandler
 from tab_cli.handlers.parquet import ParquetHandler
 
 _READER_MAP = {
@@ -12,6 +13,7 @@ _READER_MAP = {
     "tsv": CsvHandler("\t"),
     "parquet": ParquetHandler(),
     "jsonl": JsonlHandler(),
+    "avro": AvroHandler(),
 }
 
 _WRITER_MAP = {
@@ -19,6 +21,7 @@ _WRITER_MAP = {
     "tsv": CsvHandler("\t"),
     "parquet": ParquetHandler(),
     "jsonl": JsonlHandler(),
+    "avro": AvroHandler(),
 }
 
 def infer_reader(path: str, format: str | None = None) -> TableReader:
