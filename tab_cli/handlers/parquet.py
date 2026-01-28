@@ -15,27 +15,22 @@ class ParquetHandler(TableReader, TableWriter):
     def extension(self) -> str:
         return ".parquet"
 
-    @staticmethod
-    def read(path: str, limit: int | None = None, offset: int = 0) -> pl.LazyFrame:
+    def read(self, path: str, limit: int | None = None, offset: int = 0) -> pl.LazyFrame:
         """Read data from a Parquet file."""
         df = pl.scan_parquet(path)
-
         if offset > 0:
             df = df.slice(offset, length=limit)
         elif limit is not None:
             df = df.head(limit)
-
         return df
 
-    @staticmethod
-    def schema(path: str) -> TableSchema:
+    def schema(self, path: str) -> TableSchema:
         """Get the schema of the Parquet file."""
         lf = pl.scan_parquet(path)
         columns = list(lf.collect_schema().items())
         return TableSchema(columns=columns)
 
-    @staticmethod
-    def summary(path: str) -> TableSummary:
+    def summary(self, path: str) -> TableSummary:
         """Get summary information about the Parquet file."""
         import pyarrow.parquet as pq
 
@@ -69,8 +64,7 @@ class ParquetHandler(TableReader, TableWriter):
             extra=extra,
         )
 
-    @staticmethod
-    def write(lf: pl.LazyFrame) -> Iterable[bytes]:
+    def write(self, lf: pl.LazyFrame) -> Iterable[bytes]:
         """Write a LazyFrame to Parquet bytes."""
         output = BytesIO()
         lf.sink_parquet(output)

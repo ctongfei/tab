@@ -4,20 +4,21 @@ from tab_cli.handlers.base import TableReader, TableWriter
 from tab_cli.handlers.cli_table import CliTableFormatter
 from tab_cli.handlers.csv import CsvHandler
 from tab_cli.handlers.directory import DirectoryReader
-from tab_cli.handlers.jsonl import JsonlWriter
+from tab_cli.handlers.jsonl import JsonlHandler
 from tab_cli.handlers.parquet import ParquetHandler
 
 _READER_MAP = {
     "csv": CsvHandler(","),
     "tsv": CsvHandler("\t"),
     "parquet": ParquetHandler(),
+    "jsonl": JsonlHandler(),
 }
 
 _WRITER_MAP = {
     "csv": CsvHandler(","),
     "tsv": CsvHandler("\t"),
     "parquet": ParquetHandler(),
-    "jsonl": JsonlWriter(),
+    "jsonl": JsonlHandler(),
 }
 
 def infer_reader(path: str, format: str | None = None) -> TableReader:

@@ -12,7 +12,7 @@ from tab_cli.handlers.base import TableReader, TableSchema, TableSummary
 class DirectoryReader(TableReader):
     """Handler wrapper for partitioned datasets (directories of files)."""
 
-    def __init__(self, extension: str, file_handler: TableReader | type[TableReader]) -> None:
+    def __init__(self, extension: str, file_handler: TableReader) -> None:
         self.extension = extension
         self.file_handler = file_handler
 

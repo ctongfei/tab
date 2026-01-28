@@ -19,9 +19,10 @@ class Tab:
         output: str | None,
     ) -> None:
         show_truncation = limit is None and output is None
-        actual_limit = 10 if show_truncation else limit
+        actual_limit = 20 if show_truncation else limit
 
         if show_truncation:
+            assert actual_limit is not None
             lf = lf.slice(skip, length=actual_limit + 1)
             df = lf.collect()
             truncated = len(df) > actual_limit

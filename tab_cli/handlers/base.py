@@ -4,7 +4,6 @@ import os
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from dataclasses import dataclass
-from rich.text import Text
 from rich.table import Table
 from rich.progress import Progress
 from rich import box
@@ -48,11 +47,12 @@ class TableSummary:
         """Rich-formatted output for the summary."""
 
         def format_size(size: int) -> str:
+            s: float = size
             for unit in ["B", "KiB", "MiB", "GiB", "TiB"]:
-                if size < 1024:
-                    return f"{size:.1f} {unit}" if unit != "B" else f"{size} {unit}"
-                size /= 1024
-            return f"{size:.1f} PiB"
+                if s < 1024:
+                    return f"{s:.1f} {unit}" if unit != "B" else f"{int(s)} {unit}"
+                s /= 1024
+            return f"{s:.1f} PiB"
 
         table = Table(
             show_header=False,
@@ -75,19 +75,16 @@ class TableSummary:
 
 class TableReader(ABC):
 
-    @staticmethod
     @abstractmethod
-    def read(path: str, limit: int | None = None, offset: int = 0) -> pl.LazyFrame:
+    def read(self, path: str, limit: int | None = None, offset: int = 0) -> pl.LazyFrame:
         pass
 
-    @staticmethod
     @abstractmethod
-    def schema(path: str) -> TableSchema:
+    def schema(self, path: str) -> TableSchema:
         pass
 
-    @staticmethod
     @abstractmethod
-    def summary(path: str) -> TableSummary:
+    def summary(self, path: str) -> TableSummary:
         pass
 
 
@@ -98,9 +95,8 @@ class TableWriter(ABC):
         """Return the file extension for this format (e.g., '.parquet', '.csv')."""
         pass
 
-    @staticmethod
     @abstractmethod
-    def write(df: pl.LazyFrame) -> Iterable[bytes]:
+    def write(self, lf: pl.LazyFrame) -> Iterable[bytes]:
         pass
 
     @abstractmethod

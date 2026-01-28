@@ -3,13 +3,10 @@
 A fast CLI tool for viewing, querying, and converting tabular data files.
 
 ## Supported Formats
-
-| Format  | Extension | Read | Write |
-|---------|-----------|------|-------|
-| Parquet | `.parquet` | ✓ | ✓ |
-| CSV     | `.csv`     | ✓ | ✓ |
-| TSV     | `.tsv`     | ✓ | ✓ |
-| JSONL   | `.jsonl`   | - | ✓ |
+ - Parquet
+ - CSV
+ - TSV
+ - Jsonl
 
 ## Usage
 
@@ -74,12 +71,12 @@ tab convert data.csv output_dir/ -o parquet -n 4
 
 ### Common options
 
-| Option    | Description |
-|-----------|-------------|
-| `-i`      | Input format (`parquet`, `csv`, `tsv`). Auto-detected from extension. |
-| `-o`      | Output format (`parquet`, `csv`, `tsv`, `jsonl`). |
-| `--limit` | Maximum number of rows to display. |
-| `--skip`  | Number of rows to skip from the beginning. |
+| Option    | Description                                                                   |
+|-----------|-------------------------------------------------------------------------------|
+| `-i`      | Input format (`parquet`, `csv`, `tsv`, `jsonl`). Auto-detected from extension. |
+| `-o`      | Output format (`parquet`, `csv`, `tsv`, `jsonl`).                             |
+| `--limit` | Maximum number of rows to display.                                            |
+| `--skip`  | Number of rows to skip from the beginning.                                    |
 
 ### Convert options
 
