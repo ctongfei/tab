@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Iterable
 
 from rich.table import Table
@@ -10,8 +11,9 @@ from tab_cli.style import _ALT_ROW_STYLE, _KEY_STYLE
 
 
 class CliTableFormatter(TableWriter):
-    def __init__(self, truncated: bool = False):
+    def __init__(self, truncated: bool = False, svg_capture: bool = False):
         self.truncated = truncated
+        self.svg_capture = svg_capture
 
     def extension(self) -> str:
         return ".txt"
@@ -35,13 +37,18 @@ class CliTableFormatter(TableWriter):
         if self.truncated:
             table.add_row(*["..." for _ in lf.collect_schema().names()])
 
-        console = Console(force_terminal=True)
-        with console.capture() as capture:
+        if self.svg_capture:
+            console = Console(record=True, width=80)
             console.print(table)
+            svg = console.export_svg()
+            print(svg, file=sys.stderr)
+        else:
+            console = Console()
+            with console.capture() as capture:
+                console.print(table)
+            yield capture.get().encode("utf-8")
 
-        yield capture.get().encode("utf-8")
-
-    def write_single(self, lf: pl.LazyFrame, path: str) -> None:
+    def write_to_single_file(self, lf: pl.LazyFrame, path: str) -> None:
         """Write a LazyFrame to a single text file."""
         with open(path, "wb") as f:
             for chunk in self.write(lf):

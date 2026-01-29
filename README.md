@@ -1,13 +1,13 @@
 # tab
 
-A CLI tool for viewing, querying, and converting tabular data files.
+A CLI tool for viewing, querying, and converting tabular data files. Supports AWS / Azure / Google Cloud Storage URLs.
 
 ## Supported Formats
- - Parquet
- - Avro
+ - Jsonl
  - CSV
  - TSV
- - Jsonl
+ - Parquet
+ - Avro
 
 ## Usage
 
@@ -16,10 +16,9 @@ A CLI tool for viewing, querying, and converting tabular data files.
 Display rows from a tabular data file:
 
 ```bash
-tab view data.parquet
-tab view data.csv --limit 20
-tab view data.tsv --skip 100 --limit 50
+tab view data.csv
 ```
+![tab view](assets/test.svg)
 
 Output to different formats:
 
@@ -28,17 +27,13 @@ tab view data.parquet -o jsonl
 tab view data.parquet -o csv
 ```
 
-### Schema
-
-Display the schema (column names and types):
+### Show schema
 
 ```bash
 tab schema data.parquet
 ```
 
-### Summary
-
-Display summary information about a file:
+### Show summary
 
 ```bash
 tab summary data.parquet
@@ -49,9 +44,9 @@ tab summary data.parquet
 Run SQL queries on your data. The table is referenced as `t`:
 
 ```bash
-tab sql "SELECT * FROM t WHERE age > 30" data.parquet
-tab sql "SELECT name, COUNT(*) FROM t GROUP BY name" data.csv
+tab sql 'SELECT * FROM t WHERE Metric_A_Value > 80' test.csv
 ```
+![tab sql](assets/test-where.svg)
 
 ### Convert
 
@@ -66,6 +61,12 @@ Write partitioned output:
 
 ```bash
 tab convert data.csv output_dir/ -o parquet -n 4
+```
+
+### Concatenate multiple files
+
+```bash
+tab cat data1.csv data2.csv data3.csv -o jsonl > output.jsonl
 ```
 
 ## Options

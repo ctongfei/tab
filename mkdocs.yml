@@ -1,0 +1,37 @@
+site_name: 'tab'
+site_description: 'A CLI tool for tabular data'
+site_author: 'Tongfei Chen'
+copyright: 'Copyright &copy; 2026 Tongfei Chen'
+
+theme:
+  name: 'material'
+  palette:
+    primary: 'light blue'
+  font:
+    text: 'Inter'
+    code: 'Roboto Mono'
+  icon:
+    logo: material/table-eye
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+
+repo_name: 'ctongfei/tab'
+repo_url: 'https://github.com/ctongfei/tab'
+
+nav:
+  - 'Azure': 'azure.md'
+
+watch:
+  - tab_cli
+

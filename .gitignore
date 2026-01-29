@@ -60,3 +60,9 @@ htmlcov/
 # Misc
 *.log
 .DS_Store
+
+# Generated assets
+docs/assets/
+
+# Claude
+.claude/
