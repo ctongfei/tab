@@ -1,0 +1,9 @@
+Participant_ID,Timestamp,Treatment_Group,Metric_A_Value,Metric_B_Value,Status
+P001,2026-01-28T08:00:00Z,Control,72.4,1.05,Baseline
+P001,2026-01-28T12:00:00Z,Control,74.1,1.08,Active
+P002,2026-01-28T08:05:00Z,Experimental,68.9,0.92,Baseline
+P002,2026-01-28T12:05:00Z,Experimental,81.3,1.45,Active
+P003,2026-01-28T08:10:00Z,Placebo,70.2,1.01,Baseline
+P003,2026-01-28T12:10:00Z,Placebo,71.5,1.03,Active
+P004,2026-01-28T08:15:00Z,Experimental,65.8,0.88,Baseline
+P004,2026-01-28T12:15:00Z,Experimental,88.2,1.82,Active
