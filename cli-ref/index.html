@@ -13,8 +13,10 @@
       
       
       
-        <link rel="prev" href="../cli-ref/">
+        <link rel="prev" href="..">
       
+      
+        <link rel="next" href="../azure/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -22,7 +24,7 @@
     
     
       
-        <title>Azure - tab</title>
+        <title>CLI Reference - tab</title>
       
     
     
@@ -72,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#interpretation-of-az-urls" class="md-skip">
+        <a href="#cli-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Azure
+              CLI Reference
             
           </span>
         </div>
@@ -242,26 +244,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../cli-ref/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    CLI Reference
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -271,12 +253,14 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
   
   <span class="md-ellipsis">
-    Azure
+    CLI Reference
   </span>
   
 
@@ -287,7 +271,7 @@
         
   
   <span class="md-ellipsis">
-    Azure
+    CLI Reference
   </span>
   
 
@@ -299,6 +283,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -307,9 +293,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#interpretation-of-az-urls" class="md-nav__link">
+  <a href="#tab-view" class="md-nav__link">
     <span class="md-ellipsis">
-      Interpretation of az:// URLs
+      tab view
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      tab schema
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      tab summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-sql" class="md-nav__link">
+    <span class="md-ellipsis">
+      tab sql
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-convert" class="md-nav__link">
+    <span class="md-ellipsis">
+      tab convert
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-cat" class="md-nav__link">
+    <span class="md-ellipsis">
+      tab cat
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Global options
     </span>
   </a>
   
@@ -319,6 +359,26 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../azure/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Azure
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -340,6 +400,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -348,9 +410,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#interpretation-of-az-urls" class="md-nav__link">
+  <a href="#tab-view" class="md-nav__link">
     <span class="md-ellipsis">
-      Interpretation of az:// URLs
+      tab view
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      tab schema
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      tab summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-sql" class="md-nav__link">
+    <span class="md-ellipsis">
+      tab sql
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-convert" class="md-nav__link">
+    <span class="md-ellipsis">
+      tab convert
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tab-cat" class="md-nav__link">
+    <span class="md-ellipsis">
+      tab cat
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Global options
     </span>
   </a>
   
@@ -374,16 +490,172 @@
   
 
 
-  <h1>Azure</h1>
-
-<h4 id="interpretation-of-az-urls">Interpretation of <code>az://</code> URLs<a class="headerlink" href="#interpretation-of-az-urls" title="Permanent link">&para;</a></h4>
-<p>The <code>az://</code> URL scheme is used to access Azure Blob Storage. The interpretation of the URL authority (the part between <code>az://</code> and the first <code>/</code>) can be configured with the <code>--az-url-authority-is-account</code> flag.</p>
-<p>Two interpretations are supported:</p>
-<ul>
-<li><code>az://$account/$container/$path</code> - the authority is the storage account name</li>
-<li><code>az://$container/$path</code> - the authority is the container name (default <code>adlfs</code> behavior)</li>
-</ul>
-<p>The first form requires the <code>--az-url-authority-is-account</code> flag. The second form is consistent with <code>s3://</code> and <code>gs://</code> URLs, but requires the <code>AZURE_STORAGE_ACCOUNT</code> environment variable to be set.</p>
+<h1 id="cli-reference">CLI Reference<a class="headerlink" href="#cli-reference" title="Permanent link">&para;</a></h1>
+<h2 id="tab-view"><code>tab view</code><a class="headerlink" href="#tab-view" title="Permanent link">&para;</a></h2>
+<p>View tabular data from a data file, or a directory of partitions of data files.</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>view<span class="w"> </span><span class="nv">$path</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<p>Options:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i</code> / <code>--input-format</code></td>
+<td>Input format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). Auto-detected from extension if omitted.</td>
+</tr>
+<tr>
+<td><code>-o</code> / <code>--output-format</code></td>
+<td>Output format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). If not specified, print Rich table in terminal.</td>
+</tr>
+<tr>
+<td><code>--limit</code></td>
+<td>Maximum number of rows to display.</td>
+</tr>
+<tr>
+<td><code>--skip</code></td>
+<td>Number of rows to skip from the beginning.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tab-schema"><code>tab schema</code><a class="headerlink" href="#tab-schema" title="Permanent link">&para;</a></h2>
+<p>Display the schema of a tabular data file.</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>schema<span class="w"> </span><span class="nv">$path</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<p>Options:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i</code> / <code>--input-format</code></td>
+<td>Input format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). Auto-detected from extension if omitted.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tab-summary"><code>tab summary</code><a class="headerlink" href="#tab-summary" title="Permanent link">&para;</a></h2>
+<p>Display summary information about a tabular data file.</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>summary<span class="w"> </span><span class="nv">$path</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<p>Options:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i</code> / <code>--input-format</code></td>
+<td>Input format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). Auto-detected from extension if omitted.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tab-sql"><code>tab sql</code><a class="headerlink" href="#tab-sql" title="Permanent link">&para;</a></h2>
+<p>Run a SQL query on tabular data. The table is available as <code>t</code>.</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>sql<span class="w"> </span><span class="nv">$query</span><span class="w"> </span><span class="nv">$path</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<p>Options:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i</code> / <code>--input-format</code></td>
+<td>Input format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). Auto-detected from extension if omitted.</td>
+</tr>
+<tr>
+<td><code>-o</code> / <code>--output-format</code></td>
+<td>Output format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). If not specified, print Rich table in terminal.</td>
+</tr>
+<tr>
+<td><code>--limit</code></td>
+<td>Maximum number of rows to display.</td>
+</tr>
+<tr>
+<td><code>--skip</code></td>
+<td>Number of rows to skip from the beginning.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tab-convert"><code>tab convert</code><a class="headerlink" href="#tab-convert" title="Permanent link">&para;</a></h2>
+<p>Convert tabular data from one format to another.</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>convert<span class="w"> </span><span class="nv">$src</span><span class="w"> </span><span class="nv">$dst</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<p>Options:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i</code> / <code>--input-format</code></td>
+<td>Input format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). Auto-detected from extension if omitted.</td>
+</tr>
+<tr>
+<td><code>-o</code> / <code>--output-format</code></td>
+<td>Output format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). If not specified, inherits from input format.</td>
+</tr>
+<tr>
+<td><code>-n</code> / <code>--num-partitions</code></td>
+<td>Number of output partitions. Creates a directory with partition files.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tab-cat"><code>tab cat</code><a class="headerlink" href="#tab-cat" title="Permanent link">&para;</a></h2>
+<p>Concatenate tabular data from multiple files.</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>cat<span class="w"> </span><span class="nv">$paths</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<p>Options:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i</code> / <code>--input-format</code></td>
+<td>Input format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). Auto-detected from extension if omitted.</td>
+</tr>
+<tr>
+<td><code>-o</code> / <code>--output-format</code></td>
+<td>Output format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). If not specified, print Rich table in terminal.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="global-options">Global options<a class="headerlink" href="#global-options" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--az-url-authority-is-account</code></td>
+<td>Interpret az:// URL authority as storage account name instead of container name. See <a href="Azure">azure.md</a> for more information.</td>
+</tr>
+</tbody>
+</table>
 
 
 
