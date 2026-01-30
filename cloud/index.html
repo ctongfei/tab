@@ -13,8 +13,10 @@
       
       
       
-        <link rel="prev" href="../cli-ref/">
+        <link rel="prev" href="..">
       
+      
+        <link rel="next" href="../cli-ref/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -22,7 +24,7 @@
     
     
       
-        <title>Azure - tab</title>
+        <title>Cloud support - tab</title>
       
     
     
@@ -72,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#interpretation-of-az-urls" class="md-skip">
+        <a href="#cloud-support" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Azure
+              Cloud support
             
           </span>
         </div>
@@ -242,26 +244,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../cli-ref/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    CLI Reference
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -271,12 +253,14 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
   
   <span class="md-ellipsis">
-    Azure
+    Cloud support
   </span>
   
 
@@ -287,7 +271,7 @@
         
   
   <span class="md-ellipsis">
-    Azure
+    Cloud support
   </span>
   
 
@@ -299,6 +283,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -307,9 +293,42 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#aws-s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      AWS S3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#azure-blob-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Azure Blob Storage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Azure Blob Storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#interpretation-of-az-urls" class="md-nav__link">
     <span class="md-ellipsis">
       Interpretation of az:// URLs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#google-cloud-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Google Cloud Storage
     </span>
   </a>
   
@@ -319,6 +338,26 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-ref/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CLI reference
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -340,6 +379,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -348,9 +389,42 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#aws-s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      AWS S3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#azure-blob-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Azure Blob Storage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Azure Blob Storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#interpretation-of-az-urls" class="md-nav__link">
     <span class="md-ellipsis">
       Interpretation of az:// URLs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#google-cloud-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Google Cloud Storage
     </span>
   </a>
   
@@ -374,16 +448,80 @@
   
 
 
-  <h1>Azure</h1>
+<h1 id="cloud-support">Cloud support<a class="headerlink" href="#cloud-support" title="Permanent link">&para;</a></h1>
+<p><code>tab</code> supports directly reading tabular data files or directories from cloud storage:</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>view<span class="w"> </span>s3://<span class="nv">$bucket</span>/<span class="nv">$path</span>
+tab<span class="w"> </span>view<span class="w"> </span>gs://<span class="nv">$bucket</span>/<span class="nv">$path</span>
+tab<span class="w"> </span>view<span class="w"> </span>az://<span class="nv">$container</span>/<span class="nv">$path</span>
+tab<span class="w"> </span>view<span class="w"> </span>abfss://<span class="nv">$container</span>@<span class="nv">$account</span>.dfs.core.windows.net/<span class="nv">$path</span>
+</code></pre></div>
+<h2 id="aws-s3">AWS S3<a class="headerlink" href="#aws-s3" title="Permanent link">&para;</a></h2>
+<p>Authentication methods (in order):</p>
+<ol>
+<li><strong>Environment variables</strong>: <code>AWS_ACCESS_KEY_ID</code>, <code>AWS_SECRET_ACCESS_KEY</code>, <code>AWS_SESSION_TOKEN</code></li>
+<li><strong>Profile</strong>: <code>AWS_PROFILE</code> or default — handles <code>~/.aws/credentials</code>, SSO, assume role, instance metadata</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Option 1: Set credentials directly</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span>...
+<span class="nb">export</span><span class="w"> </span><span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span>...
 
+<span class="c1"># Option 2: Use a profile</span>
+aws<span class="w"> </span>configure<span class="w">              </span><span class="c1"># static keys</span>
+aws<span class="w"> </span>sso<span class="w"> </span>login<span class="w">              </span><span class="c1"># SSO authentication</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AWS_PROFILE</span><span class="o">=</span>my-profile
+</code></pre></div>
+<h2 id="azure-blob-storage">Azure Blob Storage<a class="headerlink" href="#azure-blob-storage" title="Permanent link">&para;</a></h2>
+<p>Authentication methods (in order):</p>
+<ol>
+<li><strong>Connection string</strong>: <code>AZURE_STORAGE_CONNECTION_STRING</code></li>
+<li><strong>Account key</strong>: <code>AZURE_STORAGE_KEY</code></li>
+<li><strong>SAS token</strong>: <code>AZURE_STORAGE_SAS_TOKEN</code></li>
+<li><strong>Azure AD / RBAC</strong>: <code>DefaultAzureCredential</code></li>
+<li><strong>Azure CLI</strong>: Key fetched via <code>az storage account keys list</code></li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Option 1: Connection string</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_STORAGE_CONNECTION_STRING</span><span class="o">=</span><span class="s2">&quot;DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...&quot;</span>
+
+<span class="c1"># Option 2: Account key</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_STORAGE_ACCOUNT</span><span class="o">=</span>myaccount
+<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_STORAGE_KEY</span><span class="o">=</span>...
+
+<span class="c1"># Option 3: SAS token</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_STORAGE_ACCOUNT</span><span class="o">=</span>myaccount
+<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_STORAGE_SAS_TOKEN</span><span class="o">=</span><span class="s2">&quot;?sv=2022-11-02&amp;ss=...&quot;</span>
+
+<span class="c1"># Option 4: Azure AD (requires RBAC role: Storage Blob Data Reader)</span>
+az<span class="w"> </span>login
+
+<span class="c1"># Option 5: CLI fallback (requires ARM access)</span>
+az<span class="w"> </span>login
+</code></pre></div>
 <h4 id="interpretation-of-az-urls">Interpretation of <code>az://</code> URLs<a class="headerlink" href="#interpretation-of-az-urls" title="Permanent link">&para;</a></h4>
-<p>The <code>az://</code> URL scheme is used to access Azure Blob Storage. The interpretation of the URL authority (the part between <code>az://</code> and the first <code>/</code>) can be configured with the <code>--az-url-authority-is-account</code> flag.</p>
+<p>The interpretation of the <code>az://</code> URL authority (the part between <code>az://</code> and the first <code>/</code>) can be configured with the <code>--az-url-authority-is-account</code> flag.</p>
 <p>Two interpretations are supported:</p>
 <ul>
+<li><code>az://$container/$path</code> - the authority is the container name (default adlfs behavior)</li>
 <li><code>az://$account/$container/$path</code> - the authority is the storage account name</li>
-<li><code>az://$container/$path</code> - the authority is the container name (default <code>adlfs</code> behavior)</li>
 </ul>
-<p>The first form requires the <code>--az-url-authority-is-account</code> flag. The second form is consistent with <code>s3://</code> and <code>gs://</code> URLs, but requires the <code>AZURE_STORAGE_ACCOUNT</code> environment variable to be set.</p>
+<p>The first form is consistent with <code>s3://</code> and <code>gs://</code> URLs, but requires the <code>AZURE_STORAGE_ACCOUNT</code> environment variable to be set.
+The second form requires the <code>--az-url-authority-is-account</code> flag. </p>
+<h2 id="google-cloud-storage">Google Cloud Storage<a class="headerlink" href="#google-cloud-storage" title="Permanent link">&para;</a></h2>
+<p>Authentication methods (in order):</p>
+<ol>
+<li><strong><code>GOOGLE_APPLICATION_CREDENTIALS</code></strong>: Path to service account JSON</li>
+<li><strong>ADC file</strong>: <code>~/.config/gcloud/application_default_credentials.json</code></li>
+<li><strong>gcloud CLI</strong>: Token from <code>gcloud auth print-access-token</code></li>
+<li><strong><code>google.auth.default()</code></strong>: Default credential resolution</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Option 1: Service account</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">GOOGLE_APPLICATION_CREDENTIALS</span><span class="o">=</span>/path/to/service-account.json
+
+<span class="c1"># Option 2: User credentials (ADC)</span>
+gcloud<span class="w"> </span>auth<span class="w"> </span>application-default<span class="w"> </span>login
+
+<span class="c1"># Option 3: CLI login (fallback)</span>
+gcloud<span class="w"> </span>auth<span class="w"> </span>login
+</code></pre></div>
 
 
 
