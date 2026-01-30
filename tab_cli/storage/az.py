@@ -197,8 +197,8 @@ class AzBackend(StorageBackend):
             return {
                 "account_name": self.account,
                 "azure_storage_account_name": self.account,
-                "anon": False,
-                "use_azure_cli": True,
+                "anon": 'false',
+                "use_azure_cli": 'true',
                 "azure_use_azure_cli": "true",
             }
 
