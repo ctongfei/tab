@@ -30,8 +30,9 @@ repo_name: 'ctongfei/tab'
 repo_url: 'https://github.com/ctongfei/tab'
 
 nav:
-  - 'Azure': 'azure.md'
+  - 'Introduction': 'index.md'
+  - 'Cloud support': 'cloud.md'
+  - 'CLI reference': 'cli-ref.md'
 
 watch:
   - tab_cli
-

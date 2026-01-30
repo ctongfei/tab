@@ -12,7 +12,7 @@ from rich.table import Table
 
 from tab_cli.formats.base import FormatHandler
 from tab_cli.storage.base import StorageBackend
-from tab_cli.style import _ALT_ROW_STYLE, _KEY_STYLE, _VAL_STYLE
+from tab_cli.style import _ALT_ROW_STYLE_0, _ALT_ROW_STYLE_1, _KEY_STYLE, _VAL_STYLE
 
 
 @dataclass
@@ -25,7 +25,7 @@ class TableSchema:
         table = Table(
             show_header=False,
             box=box.SIMPLE_HEAD,
-            row_styles=["", _ALT_ROW_STYLE],
+            row_styles=[_ALT_ROW_STYLE_0, _ALT_ROW_STYLE_1],
         )
         table.add_column(style=_KEY_STYLE)
         table.add_column(style=_VAL_STYLE)

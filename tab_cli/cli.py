@@ -3,9 +3,11 @@
 import sys
 from typing import Annotated, Optional
 
+from loguru import logger
 import polars as pl
 import typer
 from rich.console import Console
+from rich.logging import RichHandler
 
 from tab_cli import config
 from tab_cli.handlers import TableWriter, infer_reader, infer_writer
@@ -25,9 +27,23 @@ def main_callback(
             help="Interpret az:// URL authority as storage account name instead of container name",
         ),
     ] = False,
+    log_level: Annotated[
+        str,
+        typer.Option("--log-level", help="Log level from {DEBUG, INFO, WARNING, ERROR, CRITICAL}"),
+    ] = "INFO",
 ) -> None:
-    """Global options for tab CLI."""
+    """Global options for tab_cli CLI."""
     config.config.az_url_authority_is_account = az_url_authority_is_account
+    logger.remove()
+    logger.add(
+        RichHandler(
+            rich_tracebacks=True,
+            tracebacks_show_locals=True,
+            markup=True,
+        ),
+        format="{message}",
+        level=log_level.upper(),
+    )
 
 
 def _output(
@@ -70,7 +86,6 @@ def view(
     reader = infer_reader(path, format=input)
     lf = reader.read(path)
     _output(lf, limit=limit, skip=skip, output=output)
-
 
 @app.command()
 def schema(

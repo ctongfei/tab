@@ -1,6 +1,6 @@
 [project]
 name = "tab-cli"
-version = "0.1.0"
+version = "0.1.1"
 description = "A CLI tool for tabular data"
 authors = [{name = "Tongfei Chen", email = "tongfei@pm.me"}]
 readme = "README.md"
@@ -14,12 +14,13 @@ dependencies = [
     "blobfile>=3.0",
     "polars-fastavro>=0.5.1",
     "fsspec>=2025.1.0",
+    "loguru>=0.7.3",
 ]
 
 [project.optional-dependencies]
 s3 = ["s3fs>=2025.1.0"]
 gcs = ["gcsfs>=2025.1.0"]
-azure = ["adlfs>=2025.1.0"]
+azure = ["adlfs>=2025.1.0", "azure-identity>=1.10.0"]
 
 [dependency-groups]
 dev = [

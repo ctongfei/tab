@@ -7,7 +7,7 @@ from rich.console import Console
 import polars as pl
 
 from tab_cli.handlers.base import TableWriter
-from tab_cli.style import _ALT_ROW_STYLE, _KEY_STYLE
+from tab_cli.style import _ALT_ROW_STYLE_0, _ALT_ROW_STYLE_1, _KEY_STYLE
 
 
 class CliTableFormatter(TableWriter):
@@ -24,7 +24,7 @@ class CliTableFormatter(TableWriter):
             show_header=True,
             header_style=_KEY_STYLE,
             box=box.SIMPLE_HEAD,
-            row_styles=["default", _ALT_ROW_STYLE],
+            row_styles=[_ALT_ROW_STYLE_0, _ALT_ROW_STYLE_1],
         )
 
         for col in lf.collect_schema().names():

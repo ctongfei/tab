@@ -1,12 +1,19 @@
 import os
+from enum import Enum
 
-from typing import TYPE_CHECKING, Any, BinaryIO, Iterator
-from urllib.parse import urlparse
+from typing import Any, BinaryIO, Iterator
+from loguru import logger
 
 from tab_cli.storage import StorageBackend, FileInfo
+from tab_cli.url_parser import parse_url
 
-if TYPE_CHECKING:
-    import adlfs
+
+class AzAuthMethod(Enum):
+    CONNECTION_STRING = 1
+    ACCOUNT_KEY = 2
+    SAS_TOKEN = 3
+    AZURE_AD = 4
+    AZURE_CLI = 5
 
 
 class AzBackend(StorageBackend):
@@ -20,7 +27,7 @@ class AzBackend(StorageBackend):
         - az://container/path - authority is the container name
     """
 
-    def __init__(self, az_url_authority_is_account: bool = False) -> None:
+    def __init__(self, account: str | None, container: str | None, az_url_authority_is_account: bool = False) -> None:
         """Initialize the Azure Blob Storage backend.
 
         Args:
@@ -32,94 +39,91 @@ class AzBackend(StorageBackend):
         except ImportError as e:
             raise ImportError("Package 'adlfs' is required for az:// URLs. Install with: pip install adlfs") from e
 
-        self._adlfs = adlfs
-        self._url_authority_is_account = az_url_authority_is_account
-        self._fs_cache: dict[str, adlfs.AzureBlobFileSystem] = {}
+        self.adlfs = adlfs
+        self.fs = None
+        self.url_authority_is_account = az_url_authority_is_account
 
-    def _parse_url(self, url: str) -> tuple[str, str]:
-        """Parse az:// URL and return (account_name, internal_path).
-
-        Returns:
-            Tuple of (account_name, path_for_adlfs) where path_for_adlfs is
-            in the format that adlfs expects (container/path).
-
-        Raises:
-            ValueError: If account name cannot be determined.
-        """
-        parsed = urlparse(url)
-
-        if self._url_authority_is_account:
-            # Authority is the account name
-            # az://account/container/path or az:///container/path
-            account = parsed.netloc if parsed.netloc else None
-            if account is None:
-                # Infer from environment
-                account = os.environ.get("AZURE_STORAGE_ACCOUNT")
-                if account is None:
-                    raise ValueError(
-                        "No storage account specified in URL and AZURE_STORAGE_ACCOUNT not set. "
-                        "Use az://account/container/path and use `tab --az-url-authority-is-account`, or set the environment variable."
-                    )
-            # Path is /container/path, strip leading slash
-            internal_path = parsed.path.lstrip("/")
-        else:
-            # Authority is the container name (default adlfs behavior)
-            # az://container/path
+        if account is None:
             account = os.environ.get("AZURE_STORAGE_ACCOUNT")
-            if account is None:
-                raise ValueError(
-                    "AZURE_STORAGE_ACCOUNT environment variable not set. "
-                    "Use az://account/container/path and use `tab --az-url-authority-is-account`, or set the environment variable."
-                )
-            internal_path = f"{parsed.netloc}{parsed.path}"
-
-        return account, internal_path
-
-    def _get_fs(self, account: str) -> "adlfs.AzureBlobFileSystem":
-        """Get or create filesystem for the given account.
-
-        Tries authentication in order:
-        1. AZURE_STORAGE_KEY environment variable
-        2. Account key fetched via Azure CLI (az storage account keys list)
-        3. DefaultAzureCredential (Azure AD / RBAC) - requires Storage Blob Data Reader role
-        """
-        if account in self._fs_cache:
-            return self._fs_cache[account]
-
-        # 1. Try account key from environment
+        connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
         account_key = os.environ.get("AZURE_STORAGE_KEY")
-        if account_key:
-            self._fs_cache[account] = self._adlfs.AzureBlobFileSystem(
+        sas_token = os.environ.get("AZURE_STORAGE_SAS_TOKEN")
+
+        self.account = account
+        if account is None:
+            raise ValueError("Storage account name must be specified. Use az://account/container/path and use `tab --az-url-authority-is-account`, or set the environment variable.")
+
+        # 1. Try connection string from environment
+        if connection_string:
+            logger.debug("Authenticating to Azure storage account '{}' using connection string", account)
+            self.fs = self.adlfs.AzureBlobFileSystem(connection_string=connection_string)
+            self.connection_string = connection_string
+            self.method = AzAuthMethod.CONNECTION_STRING
+
+        # 2. Try account key from environment
+        elif account_key:
+            logger.debug("Authenticating to Azure storage account '{}' using account key", account)
+            self.fs = self.adlfs.AzureBlobFileSystem(
                 account_name=account,
                 account_key=account_key,
             )
-            return self._fs_cache[account]
+            self.account_key = account_key
+            self.method = AzAuthMethod.ACCOUNT_KEY
 
-        # 2. Try fetching account key via Azure CLI (works if user has ARM access via az login)
-        account_key = self._get_account_key_via_cli(account)
-        if account_key:
-            self._fs_cache[account] = self._adlfs.AzureBlobFileSystem(
+        # 3. Try SAS token from environment
+        elif sas_token:
+            logger.debug("Authenticating to Azure storage account '{}' using SAS token", account)
+            self.fs = self.adlfs.AzureBlobFileSystem(
                 account_name=account,
-                account_key=account_key,
+                sas_token=sas_token,
             )
-            return self._fs_cache[account]
+            self.sas_token = sas_token
+            self.method = AzAuthMethod.SAS_TOKEN
 
-        # 3. Fallback to DefaultAzureCredential (requires Storage Blob Data Reader RBAC role)
-        try:
-            from azure.identity import DefaultAzureCredential
+        else:
+            # 4. Try Azure AD / RBAC (DefaultAzureCredential)
+            try:
+                from azure.identity.aio import DefaultAzureCredential  # Async version,
 
-            self._fs_cache[account] = self._adlfs.AzureBlobFileSystem(
-                account_name=account,
-                credential=DefaultAzureCredential(),  # type: ignore[arg-type]
+                logger.debug("Authenticating to Azure storage account '{}' using Azure AD / RBAC", account)
+                self.fs = self.adlfs.AzureBlobFileSystem(
+                    account_name=account,
+                    credential=DefaultAzureCredential(),
+                )
+                self.fs.ls(container)
+                self.method = AzAuthMethod.AZURE_AD
+
+            except ImportError:
+                logger.debug("azure-identity not installed, skipping Azure AD / RBAC authentication")
+            except Exception as e:
+                logger.debug(f"Azure AD / RBAC authentication failed: {e}")
+
+        if self.fs is None:
+            # 5. Fallback to fetching account key via Azure CLI
+            logger.debug(f"Attempting to fetch account key via Azure CLI for '{account}'")
+            try:
+                account_key = self._get_account_key_via_cli(account)
+            except Exception as e:
+                logger.debug(f"Fetching account key via Azure CLI failed: {e}")
+            try:
+                if account_key:
+                    logger.debug(f"Authenticating to Azure storage account '{account}' using key from Azure CLI")
+                    self.fs = self.adlfs.AzureBlobFileSystem(
+                        account_name=account,
+                        account_key=account_key,
+                    )
+                    self.account_key = account_key
+                    self.fs.ls(container)
+                    self.method = AzAuthMethod.AZURE_CLI
+            except Exception as e:
+                logger.debug(f"Authenticating to Azure storage account '{account}' using key from Azure CLI failed: {e}")
+
+        if self.fs is None:
+            raise ValueError(
+                f"Could not authenticate to storage account '{account}'. "
+                "Set AZURE_STORAGE_CONNECTION_STRING, AZURE_STORAGE_KEY, AZURE_STORAGE_SAS_TOKEN, "
+                "configure Azure AD RBAC, or run 'az login'."
             )
-            return self._fs_cache[account]
-        except ImportError:
-            pass
-
-        raise ValueError(
-            f"Could not authenticate to storage account '{account}'. "
-            "Set AZURE_STORAGE_KEY, run 'az login', or configure Azure AD RBAC."
-        )
 
     def _get_account_key_via_cli(self, account: str) -> str | None:
         """Try to get storage account key via Azure CLI."""
@@ -149,67 +153,97 @@ class AzBackend(StorageBackend):
         Returns:
             Normalized URL in az://container/path format.
         """
-        account, internal_path = self._parse_url(url)
-        return f"az://{internal_path}"
+        parsed = parse_url(url)
+        return f"az://{parsed.bucket}/{parsed.path}"
 
     def storage_options(self, url: str) -> dict[str, str] | None:
         """Return storage options for Polars Azure access.
 
         Returns:
-            Dict with account_name and account_key for Azure authentication
+            Dict with appropriate authentication options for Azure.
+            Includes both adlfs-style keys and Rust object_store keys for compatibility.
+            Priority: connection_string > account_key > sas_token > CLI key > account_name only
         """
-        account, _ = self._parse_url(url)
-
-        # Try to get account key
-        account_key = os.environ.get("AZURE_STORAGE_KEY")
-        if not account_key:
-            account_key = self._get_account_key_via_cli(account)
-
-        if account_key:
+        if self.method == AzAuthMethod.CONNECTION_STRING:
             return {
-                "account_name": account,
-                "account_key": account_key,
+                "connection_string": self.connection_string,
+                "azure_storage_connection_string": self.connection_string,
+            }
+        elif self.method == AzAuthMethod.ACCOUNT_KEY:
+            return {
+                "account_name": self.account,
+                "account_key": self.account_key,
+                "azure_storage_account_name": self.account,
+                "azure_storage_account_key": self.account_key,
+            }
+        # 3. SAS token from environment
+        elif self.method == AzAuthMethod.SAS_TOKEN:
+            return {
+                "account_name": self.account,
+                "sas_token": self.sas_token,
+                "azure_storage_account_name": self.account,
+                "azure_storage_sas_token": self.sas_token,
+            }
+        # 4. Try fetching account key via Azure CLI
+        elif self.method == AzAuthMethod.AZURE_CLI:
+            return {
+                "account_name": self.account,
+                "account_key": self.account_key,
+                "azure_storage_account_name": self.account,
+                "azure_storage_account_key": self.account_key,
+            }
+        # Fallback: account name only (will use DefaultAzureCredential)
+        else:
+            return {
+                "account_name": self.account,
+                "azure_storage_account_name": self.account,
+                "anon": False,
+                "use_azure_cli": True,
+                "azure_use_azure_cli": "true",
             }
 
-        return {"account_name": account}
-
-    def _to_internal(self, url: str) -> tuple[Any, str]:
+    def _to_internal(self, url: str) -> str:
         """Convert URL to (filesystem, internal_path) for adlfs operations."""
-        account, internal_path = self._parse_url(url)
-        fs = self._get_fs(account)
-        return fs, internal_path
+        parsed = parse_url(url)
+        return f"{parsed.bucket}/{parsed.path}"
 
     def _to_uri(self, account: str, internal_path: str) -> str:
         """Convert internal path back to az:// URL."""
-        if self._url_authority_is_account:
+        if self.url_authority_is_account:
             return f"az://{account}/{internal_path}"
         else:
             return f"az://{internal_path}"
 
     def open(self, url: str) -> BinaryIO:
-        fs, path = self._to_internal(url)
-        return fs.open(path, "rb")
+        return self.fs.open(self._to_internal(url), "rb")
 
     def list_files(self, url: str, extension: str) -> Iterator[FileInfo]:
-        account, internal_path = self._parse_url(url)
-        fs = self._get_fs(account)
+        internal_path = self._to_internal(url)
         pattern = f"{internal_path}/**/*{extension}"
-        for path in sorted(fs.glob(pattern)):
-            info = fs.info(path)
-            yield FileInfo(url=self._to_uri(account, path), size=info["size"])
+        for path in sorted(self.fs.glob(pattern)):
+            info = self.fs.info(path)
+            yield FileInfo(url=self._to_uri(self.account, path), size=info["size"])
 
     def size(self, url: str) -> int:
-        fs, path = self._to_internal(url)
-        return fs.size(path)
+        return self.fs.size(self._to_internal(url))
 
     def is_directory(self, url: str) -> bool:
-        fs, path = self._to_internal(url)
+        path = self._to_internal(url)
         try:
-            info = fs.info(path)
+            info = self.fs.info(path)
             return info.get("type") == "directory"
         except FileNotFoundError:
             try:
-                contents = fs.ls(path, detail=False)
+                contents = self.fs.ls(path, detail=False)
                 return len(contents) > 0
             except Exception:
                 return False
+
+    def __del__(self):
+        try:
+            # Check if fs exists and has a close method
+            if hasattr(self, 'fs') and self.fs is not None:
+                self.fs.close()
+        except Exception:
+            # Silently fail as the interpreter is likely in mid-teardown
+            pass

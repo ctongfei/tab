@@ -1,0 +1,3 @@
+ - 0.1.1:
+   - Better credential handling for Azure Blob Storage and Google Cloud Storage.
+ - 0.1.0: Initial release

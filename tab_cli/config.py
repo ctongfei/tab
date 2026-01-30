@@ -1,4 +1,4 @@
-"""Global configuration for tab-cli."""
+"""Global configuration for tab_cli-cli."""
 
 from dataclasses import dataclass
 

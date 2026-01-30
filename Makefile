@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 .PHONY: install dev clean lint format test build mkdocs-build mkdocs-serve docs publish publish-test gh-deploy-docs
 
 install:
@@ -46,7 +48,7 @@ gh-deploy-docs: docs
 	VER="$$( git describe --always --tags --dirty )" ; \
 	git worktree add --force "$$WORK" gh-pages ; \
 	rm -rf "$$WORK"/* ; \
-	rsync -av book/ "$$WORK"/ ; \
+	rsync -av site/ "$$WORK"/ ; \
 	if [ -f CNAME ] ; then cp CNAME "$$WORK"/ ; fi ; \
 	pushd "$$WORK" ; \
 	git add -A ; \
