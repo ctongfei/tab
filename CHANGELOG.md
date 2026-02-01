@@ -1,3 +1,5 @@
+ - 0.1.2:
+   - Bugfix on reading directories.
  - 0.1.1:
    - Better credential handling for Azure Blob Storage and Google Cloud Storage.
  - 0.1.0: Initial release

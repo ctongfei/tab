@@ -1,10 +1,9 @@
 import os
 from enum import Enum
 
-from typing import BinaryIO, Iterator
 from loguru import logger
 
-from tab_cli.storage.base import StorageBackend, FileInfo
+from tab_cli.storage.fsspec import CloudFsspecBackend
 from tab_cli.url_parser import parse_url
 
 
@@ -14,7 +13,7 @@ class AwsAuthMethod(Enum):
     ANONYMOUS = 3        # Public buckets
 
 
-class AwsBackend(StorageBackend):
+class AwsBackend(CloudFsspecBackend):
     """Storage backend for AWS S3.
 
     URL format: s3://bucket/path
@@ -30,6 +29,8 @@ class AwsBackend(StorageBackend):
        - EC2 instance metadata
     3. Anonymous access (for public buckets, if requested)
     """
+
+    protocol = "s3"
 
     def __init__(self, anon: bool = False) -> None:
         """Initialize the AWS S3 storage backend.
@@ -187,37 +188,3 @@ class AwsBackend(StorageBackend):
         except Exception:
             pass
         return None
-
-    def _to_internal(self, url: str) -> str:
-        """Convert URL to internal path for s3fs operations."""
-        parsed = parse_url(url)
-        return f"{parsed.bucket}/{parsed.path}"
-
-    def _to_uri(self, internal_path: str) -> str:
-        """Convert internal path back to s3:// URL."""
-        return f"s3://{internal_path}"
-
-    def open(self, url: str) -> BinaryIO:
-        return self.fs.open(self._to_internal(url), "rb")
-
-    def list_files(self, url: str, extension: str) -> Iterator[FileInfo]:
-        internal_path = self._to_internal(url)
-        pattern = f"{internal_path}/**/*{extension}"
-        for path in sorted(self.fs.glob(pattern)):
-            info = self.fs.info(path)
-            yield FileInfo(url=self._to_uri(path), size=info["size"])
-
-    def size(self, url: str) -> int:
-        return self.fs.size(self._to_internal(url))
-
-    def is_directory(self, url: str) -> bool:
-        path = self._to_internal(url)
-        try:
-            info = self.fs.info(path)
-            return info.get("type") == "directory"
-        except FileNotFoundError:
-            try:
-                contents = self.fs.ls(path, detail=False)
-                return len(contents) > 0
-            except Exception:
-                return False

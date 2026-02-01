@@ -28,6 +28,13 @@ def _get_extension(path: str) -> str:
     return os.path.splitext(basename)[1][1:].lower()
 
 
+def _is_data_file(path: str) -> bool:
+    """Check if a file is a data file (not metadata/marker file)."""
+    basename = os.path.basename(path.rstrip("/"))
+    # Skip hidden files (e.g., .crc files) or Spark/Hadoop marker and metadata files
+    return not (basename.startswith(".") or basename.startswith("_"))
+
+
 def infer_reader(path: str, format: str | None = None) -> TableReader:
     """Infer the reader for a file.
 
@@ -48,13 +55,15 @@ def infer_reader(path: str, format: str | None = None) -> TableReader:
 
     # Infer format from path
     if backend.is_directory(path):
-        # Get extension from first file in directory
+        # Get extension from first data file in directory (skip metadata files)
         for file_info in backend.list_files(path, ""):
+            if not _is_data_file(file_info.url):
+                continue
             extension = _get_extension(file_info.url)
             if extension:
                 break
         else:
-            raise ValueError(f"No files found in directory: {path}")
+            raise ValueError(f"No data files found in directory: {path}")
     else:
         extension = _get_extension(path)
 

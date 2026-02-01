@@ -1,10 +1,9 @@
 import os
 from enum import Enum
 
-from typing import Any, BinaryIO, Iterator
 from loguru import logger
 
-from tab_cli.storage import StorageBackend, FileInfo
+from tab_cli.storage.fsspec import CloudFsspecBackend
 from tab_cli.url_parser import parse_url
 
 
@@ -16,7 +15,7 @@ class AzAuthMethod(Enum):
     AZURE_CLI = 5
 
 
-class AzBackend(StorageBackend):
+class AzBackend(CloudFsspecBackend):
     """Storage backend for Azure Blob Storage with configurable URL interpretation.
 
     When az_url_authority_is_account=True:
@@ -26,6 +25,8 @@ class AzBackend(StorageBackend):
     When az_url_authority_is_account=False (default adlfs behavior):
         - az://container/path - authority is the container name
     """
+
+    protocol = "az"
 
     def __init__(self, account: str | None, container: str | None, az_url_authority_is_account: bool = False) -> None:
         """Initialize the Azure Blob Storage backend.
@@ -97,6 +98,7 @@ class AzBackend(StorageBackend):
                 logger.debug("azure-identity not installed, skipping Azure AD / RBAC authentication")
             except Exception as e:
                 logger.debug(f"Azure AD / RBAC authentication failed: {e}")
+                self.fs = None  # Reset fs so we can try CLI fallback
 
         if self.fs is None:
             # 5. Fallback to fetching account key via Azure CLI
@@ -202,48 +204,9 @@ class AzBackend(StorageBackend):
                 "azure_use_azure_cli": "true",
             }
 
-    def _to_internal(self, url: str) -> str:
-        """Convert URL to (filesystem, internal_path) for adlfs operations."""
-        parsed = parse_url(url)
-        return f"{parsed.bucket}/{parsed.path}"
-
-    def _to_uri(self, account: str, internal_path: str) -> str:
+    def _to_uri(self, internal_path: str) -> str:
         """Convert internal path back to az:// URL."""
         if self.url_authority_is_account:
-            return f"az://{account}/{internal_path}"
+            return f"az://{self.account}/{internal_path}"
         else:
             return f"az://{internal_path}"
-
-    def open(self, url: str) -> BinaryIO:
-        return self.fs.open(self._to_internal(url), "rb")
-
-    def list_files(self, url: str, extension: str) -> Iterator[FileInfo]:
-        internal_path = self._to_internal(url)
-        pattern = f"{internal_path}/**/*{extension}"
-        for path in sorted(self.fs.glob(pattern)):
-            info = self.fs.info(path)
-            yield FileInfo(url=self._to_uri(self.account, path), size=info["size"])
-
-    def size(self, url: str) -> int:
-        return self.fs.size(self._to_internal(url))
-
-    def is_directory(self, url: str) -> bool:
-        path = self._to_internal(url)
-        try:
-            info = self.fs.info(path)
-            return info.get("type") == "directory"
-        except FileNotFoundError:
-            try:
-                contents = self.fs.ls(path, detail=False)
-                return len(contents) > 0
-            except Exception:
-                return False
-
-    def __del__(self):
-        try:
-            # Check if fs exists and has a close method
-            if hasattr(self, 'fs') and self.fs is not None:
-                self.fs.close()
-        except Exception:
-            # Silently fail as the interpreter is likely in mid-teardown
-            pass

@@ -40,6 +40,8 @@ def parse_url(url: str) -> ParsedUrl:
     Returns:
         ParsedUrl with scheme, bucket, account, and path components.
     """
+    # Strips trailing slashes to avoid empty path segments
+    url = url.rstrip("/")
     parsed = urlparse(url)
     scheme = parsed.scheme.lower() if parsed.scheme else ""
 

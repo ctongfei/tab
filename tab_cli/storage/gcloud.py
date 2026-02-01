@@ -2,10 +2,9 @@ import os
 from enum import Enum
 from pathlib import Path
 
-from typing import BinaryIO, Iterator
 from loguru import logger
 
-from tab_cli.storage.base import StorageBackend, FileInfo
+from tab_cli.storage.fsspec import CloudFsspecBackend
 from tab_cli.url_parser import parse_url
 
 
@@ -16,7 +15,7 @@ class GcloudAuthMethod(Enum):
     GOOGLE_DEFAULT = 4   # google.auth.default()
 
 
-class GcloudBackend(StorageBackend):
+class GcloudBackend(CloudFsspecBackend):
     """Storage backend for Google Cloud Storage.
 
     URL format: gs://bucket/path
@@ -27,6 +26,8 @@ class GcloudBackend(StorageBackend):
     3. google.auth.default() via gcsfs token="google_default"
     4. gcloud CLI login credentials (gcloud auth print-access-token)
     """
+
+    protocol = "gs"
 
     def __init__(self) -> None:
         """Initialize the Google Cloud Storage backend."""
@@ -170,46 +171,3 @@ class GcloudBackend(StorageBackend):
             return {
                 "token": "google_default",
             }
-
-    def _to_internal(self, url: str) -> str:
-        """Convert URL to internal path for gcsfs operations."""
-        parsed = parse_url(url)
-        return f"{parsed.bucket}/{parsed.path}"
-
-    def _to_uri(self, internal_path: str) -> str:
-        """Convert internal path back to gs:// URL."""
-        return f"gs://{internal_path}"
-
-    def open(self, url: str) -> BinaryIO:
-        return self.fs.open(self._to_internal(url), "rb")
-
-    def list_files(self, url: str, extension: str) -> Iterator[FileInfo]:
-        internal_path = self._to_internal(url)
-        pattern = f"{internal_path}/**/*{extension}"
-        for path in sorted(self.fs.glob(pattern)):
-            info = self.fs.info(path)
-            yield FileInfo(url=self._to_uri(path), size=info["size"])
-
-    def size(self, url: str) -> int:
-        return self.fs.size(self._to_internal(url))
-
-    def is_directory(self, url: str) -> bool:
-        path = self._to_internal(url)
-        try:
-            info = self.fs.info(path)
-            return info.get("type") == "directory"
-        except FileNotFoundError:
-            try:
-                contents = self.fs.ls(path, detail=False)
-                return len(contents) > 0
-            except Exception:
-                return False
-
-    def __del__(self):
-        try:
-            if hasattr(self, 'fs') and self.fs is not None:
-                # gcsfs doesn't have a close method, but clear session if possible
-                if hasattr(self.fs, 'session') and self.fs.session:
-                    pass  # aiohttp session cleanup is handled by gcsfs
-        except Exception:
-            pass
