@@ -55,7 +55,7 @@ class TableSummary:
         table = Table(
             show_header=False,
             box=box.SIMPLE_HEAD,
-            row_styles=["", _ALT_ROW_STYLE],
+            row_styles=[_ALT_ROW_STYLE_0, _ALT_ROW_STYLE_1],
         )
         table.add_column(style=_KEY_STYLE)
         table.add_column(style=_VAL_STYLE)
