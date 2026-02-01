@@ -60,7 +60,7 @@ class FsspecBackend(StorageBackend):
         internal_path = self._to_internal(url)
         pattern = f"{internal_path}/**/*{extension}"
         files = self.fs.glob(pattern)
-        logger.debug("{len(files)} files found.")
+        logger.debug(f"{len(files)} files found.")
         for path in sorted(files):
             info = self.fs.info(path)
             yield FileInfo(url=self._to_uri(path), size=info["size"])

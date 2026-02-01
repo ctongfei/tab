@@ -31,22 +31,8 @@ class ParquetFormat(FormatHandler):
         return pl.scan_parquet(url, storage_options=storage_options).select(pl.len()).collect().item()
 
     def extra_summary(self, url: str) -> dict[str, str | int | float] | None:
-        import pyarrow.parquet as pq
-
-        pf = pq.ParquetFile(url)
-        metadata = pf.metadata
-
-        extra: dict[str, str | int | float] = {}
-        codecs: set[str] = set()
-        for rg_idx in range(metadata.num_row_groups):
-            rg = metadata.row_group(rg_idx)
-            for col_idx in range(rg.num_columns):
-                col = rg.column(col_idx)
-                codecs.add(col.compression)
-        extra["Row groups"] = metadata.num_row_groups
-        if codecs:
-            extra["Compression"] = ", ".join(sorted(codecs))
-        return extra
+        # TODO: Parquet metadata
+        pass
 
     def write(self, lf: pl.LazyFrame) -> Iterable[bytes]:
         output = BytesIO()
