@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import polars as pl
 from rich import box
-from rich.progress import Progress
+from rich.progress import Progress, track
 from rich.table import Table
 
 from tab_cli.formats.base import FormatHandler
@@ -162,7 +162,7 @@ class TableReader:
         extra_numeric: dict[str, float] = {}
         extra_strings: dict[str, set[str]] = {}
 
-        for file_info in files:
+        for file_info in track(files):
             file_size += file_info.size
             polars_uri = self.backend.normalize_for_polars(file_info.url)
             storage_options = self.backend.storage_options(file_info.url)
