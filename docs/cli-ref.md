@@ -2,7 +2,7 @@
 
 ## `tab view`
 
-View tabular data from a data file, or a directory of partitions of data files.
+View tabular data from a data file in a rich CLI format, or a directory of partitions of data files.
 
 ```bash
 tab view $path [OPTIONS]
@@ -13,9 +13,9 @@ Options:
 | Option                  | Description                                                                                               |
 |-------------------------|-----------------------------------------------------------------------------------------------------------|
 | `-i` / `--input-format` | Input format (`parquet`, `csv`, `tsv`, `jsonl`, `avro`). Auto-detected from extension if omitted.         |
-| `-o` / `--output-format` | Output format (`parquet`, `csv`, `tsv`, `jsonl`, `avro`). If not specified, print Rich table in terminal. |
 | `--limit`               | Maximum number of rows to display.                                                                        |
 | `--skip`                | Number of rows to skip from the beginning.                                                                |
+| `--max-cell-len`        | Truncate cell contents longer than this.                                                                 |
 
 ## `tab schema`
 
