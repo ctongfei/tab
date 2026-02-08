@@ -490,7 +490,7 @@
 
 <h1 id="cli-reference">CLI Reference<a class="headerlink" href="#cli-reference" title="Permanent link">&para;</a></h1>
 <h2 id="tab-view"><code>tab view</code><a class="headerlink" href="#tab-view" title="Permanent link">&para;</a></h2>
-<p>View tabular data from a data file, or a directory of partitions of data files.</p>
+<p>View tabular data from a data file in a rich CLI format, or a directory of partitions of data files.</p>
 <div class="highlight"><pre><span></span><code>tab<span class="w"> </span>view<span class="w"> </span><span class="nv">$path</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </code></pre></div>
 <p>Options:</p>
@@ -507,16 +507,16 @@
 <td>Input format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). Auto-detected from extension if omitted.</td>
 </tr>
 <tr>
-<td><code>-o</code> / <code>--output-format</code></td>
-<td>Output format (<code>parquet</code>, <code>csv</code>, <code>tsv</code>, <code>jsonl</code>, <code>avro</code>). If not specified, print Rich table in terminal.</td>
-</tr>
-<tr>
 <td><code>--limit</code></td>
 <td>Maximum number of rows to display.</td>
 </tr>
 <tr>
 <td><code>--skip</code></td>
 <td>Number of rows to skip from the beginning.</td>
+</tr>
+<tr>
+<td><code>--max-cell-len</code></td>
+<td>Truncate cell contents longer than this.</td>
 </tr>
 </tbody>
 </table>
