@@ -14,7 +14,7 @@ class AvroFormat(FormatHandler):
     """Handler for Avro files."""
 
     def extension(self) -> str:
-        return ".avro"
+        return "avro"
 
     def supports_glob(self) -> bool:
         # polars_fastavro doesn't support glob patterns

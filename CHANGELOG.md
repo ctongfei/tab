@@ -1,3 +1,6 @@
+ - 0.1.3:
+   - Separate `tab view` from `tab cat`: `tab view` does not convert formats, `tab cat` does.
+   - Added `--max-cell-len` option to `tab view` to truncate long cell contents.
  - 0.1.2:
    - Bugfix on reading directories.
  - 0.1.1:

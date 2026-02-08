@@ -11,9 +11,15 @@ from tab_cli.style import _ALT_ROW_STYLE_0, _ALT_ROW_STYLE_1, _KEY_STYLE
 
 
 class CliTableFormatter(TableWriter):
-    def __init__(self, truncated: bool = False, svg_capture: bool = False):
+    def __init__(self, truncated: bool = False, svg_capture: bool = False, max_cell_len: int | None = None):
         self.truncated = truncated
         self.svg_capture = svg_capture
+        self.max_cell_len = max_cell_len
+
+    def _truncate(self, value: str) -> str:
+        if self.max_cell_len is not None and len(value) > self.max_cell_len:
+            return value[:self.max_cell_len] + "..."
+        return value
 
     def extension(self) -> str:
         return ".txt"
@@ -32,7 +38,7 @@ class CliTableFormatter(TableWriter):
 
         for batch in lf.collect_batches():
             for row in batch.iter_rows():
-                table.add_row(*[str(v) if v is not None else "" for v in row])
+                table.add_row(*[self._truncate(str(v)) if v is not None else "" for v in row])
 
         if self.truncated:
             table.add_row(*["..." for _ in lf.collect_schema().names()])

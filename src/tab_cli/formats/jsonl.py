@@ -13,7 +13,7 @@ class JsonlFormat(FormatHandler):
     """Handler for JSONL files."""
 
     def extension(self) -> str:
-        return ".jsonl"
+        return "jsonl"
 
     def supports_glob(self) -> bool:
         return True

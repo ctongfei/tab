@@ -119,7 +119,7 @@ class TableReader:
     def schema(self, url: str) -> TableSchema:
         if self.backend.is_directory(url):
             # Get schema from first file
-            files = list(self.backend.list_files(url, self.format.extension()))
+            files = list(self.backend.list_files(url, "." + self.format.extension()))
             if not files:
                 raise ValueError(f"No {self.format.extension()} files found in {url}")
             url = files[0].url
@@ -151,7 +151,7 @@ class TableReader:
 
     def _summary_directory(self, url: str) -> TableSummary:
         """Aggregate summary from all files in directory."""
-        files = list(self.backend.list_files(url, self.format.extension()))
+        files = list(self.backend.list_files(url, "." + self.format.extension()))
         if not files:
             raise ValueError(f"No {self.format.extension()} files found in {url}")
 

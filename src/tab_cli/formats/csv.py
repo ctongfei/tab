@@ -16,7 +16,7 @@ class CsvFormat(FormatHandler):
         self.separator = separator
 
     def extension(self) -> str:
-        return ".csv" if self.separator == "," else ".tsv"
+        return "csv" if self.separator == "," else "tsv"
 
     def supports_glob(self) -> bool:
         return True

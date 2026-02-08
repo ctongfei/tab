@@ -74,20 +74,21 @@ def infer_reader(path: str, format: str | None = None) -> TableReader:
     return TableReader(backend, fmt)
 
 
-def infer_writer(format: str | None = None, truncated: bool = False) -> TableWriter:
+def infer_writer(format: str | None = None, truncated: bool = False, max_cell_len: int | None = None) -> TableWriter:
     """Infer the writer for a format.
 
     Args:
         format: Output format. If None, returns CLI table formatter.
         truncated: Whether the output is truncated (for CLI display).
+        max_cell_len: Maximum cell content length for CLI table display.
 
     Returns:
         TableWriter for the format.
     """
     if format is None:
-        return CliTableFormatter(truncated=truncated)
+        return CliTableFormatter(truncated=truncated, max_cell_len=max_cell_len)
     if format == "table-svg":
-        return CliTableFormatter(truncated=truncated, svg_capture=True)
+        return CliTableFormatter(truncated=truncated, svg_capture=True, max_cell_len=max_cell_len)
 
     fmt = _FORMAT_MAP.get(format.lower())
     if fmt is None:

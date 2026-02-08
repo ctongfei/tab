@@ -1,6 +1,6 @@
 [project]
 name = "tab-cli"
-version = "0.1.2"
+version = "0.1.3"
 description = "A CLI tool for tabular data"
 authors = [{name = "Tongfei Chen", email = "tongfei@pm.me"}]
 readme = "README.md"
@@ -26,11 +26,15 @@ azure = ["adlfs>=2025.1.0", "azure-identity>=1.10.0"]
 dev = [
     "ruff>=0.14.14",
     "ty>=0.0.14",
-    "mkdocs-material>=9.0.0"
+    "mkdocs-material>=9.0.0",
+    "pytest>=8.0",
 ]
 
 [project.scripts]
 tab = "tab_cli.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tab_cli"]
 
 [build-system]
 requires = ["hatchling"]

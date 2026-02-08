@@ -13,7 +13,7 @@ class ParquetFormat(FormatHandler):
     """Handler for Parquet files."""
 
     def extension(self) -> str:
-        return ".parquet"
+        return "parquet"
 
     def supports_glob(self) -> bool:
         return True
