@@ -78,12 +78,13 @@ def view(
     skip: Annotated[int, typer.Option("--skip", help="Number of rows to skip")] = 0,
     input: Annotated[Optional[str], typer.Option("-i", "--input-format", help="Input format, auto-detected from extension if omitted")] = None,
     max_cell_len: Annotated[Optional[int], typer.Option("--max-cell-len", help="Truncate cell contents longer than this")] = None,
+    table_svg: Annotated[bool, typer.Option("--table-svg", help="Output table as SVG")] = False,
 ) -> None:
     """View tabular data as a formatted table."""
     reader = infer_reader(path, format=input)
     lf = reader.read(path)
     lf, truncated = _apply_limit(lf, limit=limit, skip=skip, default_limit=20 if limit is None else None)
-    writer = CliTableFormatter(truncated=truncated, max_cell_len=max_cell_len)
+    writer = CliTableFormatter(truncated=truncated, max_cell_len=max_cell_len, svg_capture=table_svg)
     for chunk in writer.write(lf):
         sys.stdout.buffer.write(chunk)
 
@@ -107,6 +108,8 @@ def sql(
     skip: Annotated[int, typer.Option("--skip", help="Number of rows to skip")] = 0,
     input: Annotated[Optional[str], typer.Option("-i", "--input-format", help="Input format")] = None,
     output: Annotated[Optional[str], typer.Option("-o", "--output-format", help="Output format")] = None,
+    max_cell_len: Annotated[Optional[int], typer.Option("--max-cell-len", help="Truncate cell contents longer than this")] = None,
+    table_svg: Annotated[bool, typer.Option("--table-svg", help="Output table as SVG")] = False,
 ) -> None:
     """Run a SQL query on tabular data. The table is available as 't'."""
     reader = infer_reader(path, format=input)
@@ -115,7 +118,12 @@ def sql(
     result_lf = ctx.execute(query)
     show_truncation = limit is None and output is None
     result_lf, truncated = _apply_limit(result_lf, limit=limit, skip=skip, default_limit=20 if show_truncation else None)
-    writer = infer_writer(output, truncated=truncated)
+    if table_svg:
+        writer = CliTableFormatter(
+            truncated=truncated, max_cell_len=max_cell_len, svg_capture=table_svg
+        )
+    else:
+        writer = infer_writer(output, truncated=truncated)
     for chunk in writer.write(result_lf):
         sys.stdout.buffer.write(chunk)
 

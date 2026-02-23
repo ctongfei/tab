@@ -1,6 +1,6 @@
 # tab
 
-![pypi](https://img.shields.io/pypi/v/tab-cli)
+[![pypi](https://img.shields.io/pypi/v/tab-cli)](https://pypi.org/project/tab-cli/)
 ```sh
 pip install tab-cli
 ```

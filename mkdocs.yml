@@ -35,4 +35,4 @@ nav:
   - 'CLI reference': 'cli-ref.md'
 
 watch:
-  - tab_cli
+  - src
