@@ -44,7 +44,7 @@ tab summary data.parquet
 Run SQL queries on your data. The table is referenced as `t`:
 
 ```bash
-tab sql 'SELECT * FROM t WHERE Metric_A_Value > 80' test.csv
+tab view --sql 'SELECT * FROM t WHERE Metric_A_Value > 80' test.csv
 ```
 ![tab sql](assets/test-where.svg)
 

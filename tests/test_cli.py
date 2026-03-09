@@ -85,24 +85,24 @@ class TestCat:
         assert "─" not in result.output
 
 
-class TestSql:
-    def test_basic_table_output(self):
-        result = runner.invoke(app, ["sql", "SELECT * FROM t WHERE Status = 'Baseline'", TEST_CSV])
+class TestSqlOption:
+    def test_view_with_sql(self):
+        result = runner.invoke(app, ["view", TEST_CSV, "--sql", "SELECT * FROM t WHERE Status = 'Baseline'"])
         assert result.exit_code == 0
         assert "Baseline" in result.output
-        # Should show as a table by default (no -o)
+        # Should show as a table by default
         assert "Active" not in result.output
 
-    def test_with_output_format(self):
-        result = runner.invoke(app, ["sql", "SELECT Participant_ID, Status FROM t", TEST_CSV, "-o", "csv"])
-        assert result.exit_code == 0
-        lines = result.output.strip().splitlines()
-        assert "Participant_ID" in lines[0]
-        assert "Status" in lines[0]
-
-    def test_limit(self):
-        result = runner.invoke(app, ["sql", "SELECT * FROM t", TEST_CSV, "--limit", "2"])
+    def test_view_with_sql_and_limit(self):
+        result = runner.invoke(app, ["view", TEST_CSV, "--sql", "SELECT * FROM t", "--limit", "2"])
         assert result.exit_code == 0
         # Should have limited rows
         count = sum(1 for line in result.output.splitlines() if "P00" in line)
         assert count <= 2
+
+    def test_cat_with_sql_and_output_format(self):
+        result = runner.invoke(app, ["cat", TEST_CSV, "--sql", "SELECT Participant_ID, Status FROM t", "-o", "csv"])
+        assert result.exit_code == 0
+        lines = result.output.strip().splitlines()
+        assert "Participant_ID" in lines[0]
+        assert "Status" in lines[0]
