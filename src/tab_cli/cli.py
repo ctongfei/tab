@@ -1,8 +1,10 @@
 """Main CLI entry point using Typer."""
 
 import sys
-from typing import Annotated, Optional, TypeAlias
+from typing import Annotated, Any, Optional, TypeAlias
 
+import jmespath
+from jmespath.parser import ParsedResult
 from loguru import logger
 import polars as pl
 import typer
@@ -10,7 +12,9 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 from tab_cli import config
-from tab_cli.handlers import TableWriter, infer_reader, infer_writer
+from tab_cli.config import Config
+from tab_cli.handlers import TableWriter, infer_reader, infer_writer, is_stdin, read_stdin
+from tab_cli.handlers.base import TableSchema, TableSummary
 
 # Reusable type aliases for common CLI options
 PathArg: TypeAlias = Annotated[str, typer.Argument(help="Path to the data file or directory")]
@@ -20,6 +24,10 @@ DstArg: TypeAlias = Annotated[str, typer.Argument(help="Path to the destination 
 InputOpt: TypeAlias = Annotated[Optional[str], typer.Option("-i", "--input-format", help="Input format, auto-detected from extension if omitted")]
 OutputOpt: TypeAlias = Annotated[Optional[str], typer.Option("-o", "--output-format", help="Output format")]
 SqlOpt: TypeAlias = Annotated[Optional[str], typer.Option("--sql", help="SQL query to apply (table is available as 't')")]
+JmespathOpt: TypeAlias = Annotated[
+    Optional[str],
+    typer.Option("--jmespath", "--jp", help="JMESPath expression to apply to each row as JSON"),
+]
 LimitOpt: TypeAlias = Annotated[Optional[int], typer.Option("--limit", help="Maximum number of rows to display")]
 SkipOpt: TypeAlias = Annotated[int, typer.Option("--skip", help="Number of rows to skip")]
 MaxCellLenOpt: TypeAlias = Annotated[Optional[int], typer.Option("--max-cell-len", help="Truncate cell contents longer than this")]
@@ -68,6 +76,84 @@ def _apply_sql(lf: pl.LazyFrame, sql: str | None) -> pl.LazyFrame:
     return lf
 
 
+def _transform_jmespath_batch(
+    df: pl.DataFrame,
+    expression: ParsedResult,
+    result_mode: str | None = None,
+    expected_columns: tuple[str, ...] | None = None,
+    output_schema: dict[str, pl.DataType] | None = None,
+) -> tuple[pl.DataFrame, str | None]:
+    """Transform a batch with JMESPath and normalize it to a rectangular DataFrame."""
+    rows: list[dict[str, Any]] = []
+    mode = result_mode
+
+    for row in df.iter_rows(named=True):
+        result = expression.search(row)
+
+        if isinstance(result, dict):
+            if mode is None:
+                mode = "object"
+            elif mode != "object":
+                raise ValueError("JMESPath query must return a consistent shape across rows")
+
+            if expected_columns is not None:
+                extra_columns = set(result) - set(expected_columns)
+                if extra_columns:
+                    extras = ", ".join(sorted(extra_columns))
+                    raise ValueError(f"JMESPath query produced unexpected columns: {extras}")
+                normalized_row = {column: result.get(column) for column in expected_columns}
+            else:
+                normalized_row = result
+        else:
+            if mode is None:
+                mode = "value"
+            elif mode != "value":
+                raise ValueError("JMESPath query must return a consistent shape across rows")
+            normalized_row = {"value": result}
+
+        rows.append(normalized_row)
+
+    if output_schema is not None:
+        return pl.from_dicts(rows, schema=output_schema, strict=False), mode
+    return pl.from_dicts(rows), mode
+
+
+def _apply_jmespath(lf: pl.LazyFrame, expression: str) -> pl.LazyFrame:
+    """Apply a JMESPath expression to each row of a LazyFrame."""
+
+    compiled = jmespath.compile(expression)
+    sample_df = lf.slice(0, Config.sampling_size_for_schema_inference).collect()
+    if sample_df.is_empty():
+        return pl.DataFrame().lazy()
+
+    transformed_sample, result_mode = _transform_jmespath_batch(sample_df, compiled)
+    output_schema = transformed_sample.schema
+    expected_columns = tuple(transformed_sample.columns)
+
+    return lf.map_batches(
+        lambda batch: _transform_jmespath_batch(
+            batch,
+            compiled,
+            result_mode=result_mode,
+            expected_columns=expected_columns,
+            output_schema=output_schema,
+        )[0],
+        schema=output_schema,
+        streamable=True,
+    )
+
+
+def _apply_query(lf: pl.LazyFrame, sql: str | None, jmespath_expr: str | None) -> pl.LazyFrame:
+    """Apply exactly zero or one supported query transform to a LazyFrame."""
+    if sql is not None and jmespath_expr is not None:
+        raise ValueError("At most one query may be provided: use either --sql or --jmespath/--jp")
+    if sql is not None:
+        return _apply_sql(lf, sql)
+    if jmespath_expr is not None:
+        return _apply_jmespath(lf, jmespath_expr)
+    return lf
+
+
 def _apply_limit(
     lf: pl.LazyFrame,
     limit: int | None,
@@ -99,13 +185,17 @@ def view(
     skip: SkipOpt = 0,
     input: InputOpt = None,
     sql: SqlOpt = None,
+    jmespath_expr: JmespathOpt = None,
     max_cell_len: MaxCellLenOpt = None,
     table_svg: TableSvgOpt = False,
 ) -> None:
     """View tabular data as a formatted table."""
-    reader = infer_reader(path, format=input)
-    lf = reader.read(path)
-    lf = _apply_sql(lf, sql)
+    if is_stdin(path):
+        lf = read_stdin(format=input)
+    else:
+        reader = infer_reader(path, format=input)
+        lf = reader.read(path)
+    lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
     lf, truncated = _apply_limit(lf, limit=limit, skip=skip, default_limit=20 if limit is None else None)
     writer = infer_writer("table-svg" if table_svg else None, truncated=truncated, max_cell_len=max_cell_len)
     for chunk in writer.write(lf):
@@ -117,8 +207,13 @@ def schema(
     input: InputOpt = None,
 ) -> None:
     """Display the schema of a tabular data file."""
-    reader = infer_reader(path, format=input)
-    table_schema = reader.schema(path)
+    if is_stdin(path):
+        lf = read_stdin(format=input)
+        columns = list(lf.collect_schema().items())
+        table_schema = TableSchema(columns=columns)
+    else:
+        reader = infer_reader(path, format=input)
+        table_schema = reader.schema(path)
     console = Console(force_terminal=True)
     console.print(table_schema)
 
@@ -129,8 +224,17 @@ def summary(
     input: InputOpt = None,
 ) -> None:
     """Display summary information about a tabular data file."""
-    handler = infer_reader(path, format=input)
-    table_summary = handler.summary(path)
+    if is_stdin(path):
+        lf = read_stdin(format=input)
+        df = lf.collect()
+        table_summary = TableSummary(
+            file_size=0,
+            num_rows=len(df),
+            num_columns=len(df.columns),
+        )
+    else:
+        handler = infer_reader(path, format=input)
+        table_summary = handler.summary(path)
     console = Console(force_terminal=True)
     console.print(table_summary)
 
@@ -142,21 +246,34 @@ def convert(
     input: InputOpt = None,
     output: OutputOpt = None,
     sql: SqlOpt = None,
+    jmespath_expr: JmespathOpt = None,
     num_partitions: NumPartitionsOpt = None,
 ) -> None:
     """Convert tabular data from one format to another."""
-    reader = infer_reader(src, format=input)
-    # Determine output format: use -o if specified, else inherit from input
-    if output is not None:
-        writer = infer_writer(format=output)
-    elif input is not None:
-        writer = infer_writer(format=input)
-    else:
-        writer = reader
+    if is_stdin(src):
+        lf = read_stdin(format=input)
+        lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
+        if output is not None:
+            writer = infer_writer(format=output)
+        elif input is not None:
+            writer = infer_writer(format=input)
+        else:
+            raise ValueError("Output format (-o/--output-format) is required when reading from stdin (-)")
         assert isinstance(writer, TableWriter)
-    lf = reader.read(src)
-    lf = _apply_sql(lf, sql)
-    writer.write_to_path(lf, dst, partitions=num_partitions)
+        writer.write_to_path(lf, dst, partitions=num_partitions)
+    else:
+        reader = infer_reader(src, format=input)
+        # Determine output format: use -o if specified, else inherit from input
+        if output is not None:
+            writer = infer_writer(format=output)
+        elif input is not None:
+            writer = infer_writer(format=input)
+        else:
+            writer = reader
+            assert isinstance(writer, TableWriter)
+        lf = reader.read(src)
+        lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
+        writer.write_to_path(lf, dst, partitions=num_partitions)
 
 
 @app.command()
@@ -165,17 +282,30 @@ def cat(
     input: InputOpt = None,
     output: OutputOpt = None,
     sql: SqlOpt = None,
+    jmespath_expr: JmespathOpt = None,
 ) -> None:
     """Concatenate tabular data from multiple files, or just print a single file."""
-    reader = infer_reader(paths[0], format=input)
-    files = [reader.read(path) for path in paths]
+    files: list[pl.LazyFrame] = []
+    reader = None
+    for path in paths:
+        if is_stdin(path):
+            files.append(read_stdin(format=input))
+        else:
+            if reader is None:
+                reader = infer_reader(path, format=input)
+            files.append(reader.read(path))
     lf = pl.concat(files, how="vertical")
-    lf = _apply_sql(lf, sql)
+    lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
     if output is not None:
         writer = infer_writer(format=output)
-    else:
+    elif reader is not None:
         writer = infer_writer(format=reader.format.extension())
         assert isinstance(writer, TableWriter)
+    elif input is not None:
+        writer = infer_writer(format=input)
+        assert isinstance(writer, TableWriter)
+    else:
+        raise ValueError("Output format (-o/--output-format) or input format (-i/--input-format) is required when reading from stdin (-)")
     for chunk in writer.write(lf):
         sys.stdout.buffer.write(chunk)
 

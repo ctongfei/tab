@@ -1,6 +1,9 @@
 """Handler registration and inference."""
 
 import os
+import sys
+
+import polars as pl
 
 from tab_cli.formats import AvroFormat, CsvFormat, JsonlFormat, ParquetFormat
 from tab_cli.formats.base import FormatHandler
@@ -16,6 +19,38 @@ _FORMAT_MAP: dict[str, FormatHandler] = {
     "jsonl": JsonlFormat(),
     "avro": AvroFormat(),
 }
+
+
+STDIN_PATH = "-"
+
+
+def is_stdin(path: str) -> bool:
+    """Check if the path indicates stdin."""
+    return path == STDIN_PATH
+
+
+def _get_format(format: str | None) -> FormatHandler:
+    """Resolve a format name to a FormatHandler, raising if unknown."""
+    if format is None:
+        raise ValueError("Input format (-i/--input-format) is required when reading from stdin (-)")
+    fmt = _FORMAT_MAP.get(format.lower())
+    if fmt is None:
+        raise ValueError(f"Unknown format: {format}. Supported: {', '.join(_FORMAT_MAP)}")
+    return fmt
+
+
+def read_stdin(format: str | None = None) -> pl.LazyFrame:
+    """Read tabular data from stdin.
+
+    Args:
+        format: The input format (e.g. 'csv', 'tsv', 'jsonl', 'parquet', 'avro').
+            Required since format cannot be inferred from stdin.
+
+    Returns:
+        A LazyFrame with the data read from stdin.
+    """
+    fmt = _get_format(format)
+    return fmt.read_stream(sys.stdin.buffer).lazy()
 
 
 def _get_extension(path: str) -> str:

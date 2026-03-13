@@ -1,5 +1,6 @@
 """Tests for the tab CLI commands."""
 
+import json
 import os
 
 from typer.testing import CliRunner
@@ -8,6 +9,11 @@ from tab_cli.cli import app
 
 runner = CliRunner()
 TEST_CSV = os.path.join(os.path.dirname(__file__), "assets", "test.csv")
+
+# Read test CSV content for stdin tests
+with open(TEST_CSV, "rb") as _f:
+    TEST_CSV_BYTES = _f.read()
+TEST_CSV_TEXT = TEST_CSV_BYTES.decode("utf-8")
 
 
 class TestView:
@@ -51,7 +57,7 @@ class TestView:
         result = runner.invoke(app, ["view", TEST_CSV])
         assert result.exit_code == 0
         # 8 rows < 20 default limit, so no truncation
-        lines_with_ellipsis = [l for l in result.output.splitlines() if l.strip() == "...   ...   ...   ...   ...   ..."]
+        lines_with_ellipsis = [line for line in result.output.splitlines() if line.strip() == "...   ...   ...   ...   ...   ..."]
         assert len(lines_with_ellipsis) == 0
 
 
@@ -106,3 +112,96 @@ class TestSqlOption:
         lines = result.output.strip().splitlines()
         assert "Participant_ID" in lines[0]
         assert "Status" in lines[0]
+
+
+class TestJmespathOption:
+    def test_view_with_jmespath_object(self):
+        result = runner.invoke(app, ["view", TEST_CSV, "--jp", "{id: Participant_ID, status: Status}"])
+        assert result.exit_code == 0
+        assert "id" in result.output
+        assert "status" in result.output
+        assert "Baseline" in result.output
+
+    def test_cat_with_jmespath_object_output(self):
+        result = runner.invoke(app, ["cat", TEST_CSV, "--jp", "{id: Participant_ID, status: Status}", "-o", "jsonl"])
+        assert result.exit_code == 0
+        first_row = json.loads(result.output.strip().splitlines()[0])
+        assert first_row == {"id": "P001", "status": "Baseline"}
+
+    def test_cat_with_jmespath_scalar_output(self):
+        result = runner.invoke(app, ["cat", TEST_CSV, "--jp", "Participant_ID", "-o", "jsonl"])
+        assert result.exit_code == 0
+        first_row = json.loads(result.output.strip().splitlines()[0])
+        assert first_row == {"value": "P001"}
+
+    def test_cat_with_jmespath_list_output(self):
+        result = runner.invoke(app, ["cat", TEST_CSV, "--jp", "[Participant_ID, Status]", "-o", "jsonl"])
+        assert result.exit_code == 0
+        first_row = json.loads(result.output.strip().splitlines()[0])
+        assert first_row == {"value": ["P001", "Baseline"]}
+
+    def test_cat_with_jmespath_null_output(self):
+        result = runner.invoke(app, ["cat", TEST_CSV, "--jp", "MissingField", "-o", "jsonl"])
+        assert result.exit_code == 0
+        first_row = json.loads(result.output.strip().splitlines()[0])
+        assert first_row == {"value": None}
+
+    def test_sql_and_jmespath_are_mutually_exclusive(self):
+        result = runner.invoke(app, ["cat", TEST_CSV, "--sql", "SELECT * FROM t", "--jp", "Participant_ID", "-o", "jsonl"])
+        assert result.exit_code != 0
+        assert result.exception is not None
+        assert "At most one query may be provided" in str(result.exception)
+
+
+class TestStdin:
+    """Tests for reading from stdin using '-' as the file path."""
+
+    def test_view_stdin_csv(self):
+        result = runner.invoke(app, ["view", "-i", "csv", "-"], input=TEST_CSV_TEXT)
+        assert result.exit_code == 0
+        assert "P001" in result.output
+        assert "Control" in result.output
+
+    def test_view_stdin_requires_format(self):
+        result = runner.invoke(app, ["view", "-"], input=TEST_CSV_TEXT)
+        assert result.exit_code != 0
+
+    def test_cat_stdin_csv(self):
+        result = runner.invoke(app, ["cat", "-i", "csv", "-"], input=TEST_CSV_TEXT)
+        assert result.exit_code == 0
+        lines = result.output.strip().splitlines()
+        assert "Participant_ID" in lines[0]
+        assert len(lines) == 9  # header + 8 data rows
+
+    def test_cat_stdin_with_output_format(self):
+        result = runner.invoke(app, ["cat", "-i", "csv", "-o", "tsv", "-"], input=TEST_CSV_TEXT)
+        assert result.exit_code == 0
+        lines = result.output.strip().splitlines()
+        assert "\t" in lines[0]
+
+    def test_schema_stdin_csv(self):
+        result = runner.invoke(app, ["schema", "-i", "csv", "-"], input=TEST_CSV_TEXT)
+        assert result.exit_code == 0
+        assert "Participant_ID" in result.output
+
+    def test_summary_stdin_csv(self):
+        result = runner.invoke(app, ["summary", "-i", "csv", "-"], input=TEST_CSV_TEXT)
+        assert result.exit_code == 0
+        assert "8" in result.output  # 8 rows
+        assert "6" in result.output  # 6 columns
+
+    def test_view_stdin_with_sql(self):
+        result = runner.invoke(
+            app,
+            ["view", "-i", "csv", "--sql", "SELECT * FROM t WHERE Status = 'Baseline'", "-"],
+            input=TEST_CSV_TEXT,
+        )
+        assert result.exit_code == 0
+        assert "Baseline" in result.output
+        assert "Active" not in result.output
+
+    def test_view_stdin_with_limit(self):
+        result = runner.invoke(app, ["view", "-i", "csv", "--limit", "2", "-"], input=TEST_CSV_TEXT)
+        assert result.exit_code == 0
+        assert "P001" in result.output
+        assert "P003" not in result.output

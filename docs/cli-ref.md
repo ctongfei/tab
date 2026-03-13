@@ -13,7 +13,8 @@ Options:
 | Option                  | Description                                                                                               |
 |-------------------------|-----------------------------------------------------------------------------------------------------------|
 | `-i` / `--input-format` | Input format (`parquet`, `csv`, `tsv`, `jsonl`, `avro`). Auto-detected from extension if omitted.         |
-| `--sql`                 | SQL query to apply before displaying. The table is available as `t`.                                      |
+| `--sql`                 | SQL query to apply before displaying. The table is available as `t`. Mutually exclusive with `--jmespath`. |
+| `--jmespath` / `--jp`   | JMESPath expression to apply to each row as JSON. Object outputs become columns; non-object outputs go to a `value` column. The result shape must stay consistent across rows. |
 | `--limit`               | Maximum number of rows to display.                                                                        |
 | `--skip`                | Number of rows to skip from the beginning.                                                                |
 | `--max-cell-len`        | Truncate cell contents longer than this.                                                                 |
@@ -62,7 +63,8 @@ Options:
 |-------------------------|---------------------------------------------------------------------------------------------------------|
 | `-i` / `--input-format` | Input format (`parquet`, `csv`, `tsv`, `jsonl`, `avro`). Auto-detected from extension if omitted.       |
 | `-o` / `--output-format` | Output format (`parquet`, `csv`, `tsv`, `jsonl`, `avro`). If not specified, inherits from input format. |
-| `--sql`                 | SQL query to apply before writing. The table is available as `t`.                                       |
+| `--sql`                 | SQL query to apply before writing. The table is available as `t`. Mutually exclusive with `--jmespath`. |
+| `--jmespath` / `--jp`   | JMESPath expression to apply to each row as JSON. Object outputs become columns; non-object outputs go to a `value` column. The result shape must stay consistent across rows. |
 | `-n` / `--num-partitions` | Number of output partitions. Creates a directory with partition files.                                  |
 
 
@@ -80,7 +82,8 @@ Options:
 |-------------------------|-----------------------------------------------------------------------------------------------------------|
 | `-i` / `--input-format` | Input format (`parquet`, `csv`, `tsv`, `jsonl`, `avro`). Auto-detected from extension if omitted.         |
 | `-o` / `--output-format` | Output format (`parquet`, `csv`, `tsv`, `jsonl`, `avro`). If not specified, print Rich table in terminal. |
-| `--sql`                 | SQL query to apply after concatenation. The table is available as `t`.                                    |
+| `--sql`                 | SQL query to apply after concatenation. The table is available as `t`. Mutually exclusive with `--jmespath`. |
+| `--jmespath` / `--jp`   | JMESPath expression to apply to each row as JSON. Object outputs become columns; non-object outputs go to a `value` column. The result shape must stay consistent across rows. |
 
 
 ## Global options

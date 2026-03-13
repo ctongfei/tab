@@ -48,6 +48,21 @@ tab view --sql 'SELECT * FROM t WHERE Metric_A_Value > 80' test.csv
 ```
 ![tab sql](assets/test-where.svg)
 
+### JMESPath row reshaping
+
+Run a JMESPath expression against each row as a JSON object:
+
+```bash
+tab view ugly.parquet --jp '{id: participant.id, city: profile.address.city}'
+tab cat ugly.parquet --jp 'profile.address.city' -o jsonl
+tab cat ugly.parquet --jp '[participant.id, profile.address.city]' -o jsonl
+```
+
+- Object results become output columns.
+- Non-object results are written to a single `value` column.
+- The expression should return a consistent shape across the dataset.
+- Use either `--sql` or `--jp`, but not both on the same command.
+
 ### Convert
 
 Convert between formats:
@@ -85,4 +100,3 @@ tab cat data1.csv data2.csv data3.csv -o jsonl > output.jsonl
 | Option | Description |
 |--------|-------------|
 | `-n`   | Number of output partitions. Creates a directory with part files. |
-
