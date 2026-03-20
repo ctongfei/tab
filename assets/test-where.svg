@@ -1,6 +1,3 @@
-warning: Failed to uninstall package at .venv/lib/python3.13/site-packages/tab_cli-0.1.4.dist-info due to missing `RECORD` file. Installation may result in an incomplete environment.
-Uninstalled 2 packages in 0.42ms
-Installed 1 package in 1ms
 <svg class="rich-terminal" viewBox="0 0 994 196.39999999999998" xmlns="http://www.w3.org/2000/svg">
     <!-- Generated with Rich https://www.textualize.io -->
     <style>
