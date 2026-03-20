@@ -1,3 +1,6 @@
+  - 0.1.6:
+    - Fixed bug in pyarrow loading of Parquet files.
+    - Added global config file support: settings can be persisted in `~/.config/tab/config.json`. Config file values serve as defaults that CLI flags override.
   - 0.1.5:
     - Added stdin support: use `-` as the file path to read from stdin (e.g. `cat data.csv | tab view -i csv -`). Requires `-i`/`--input-format` since format cannot be inferred. Works with `view`, `schema`, `summary`, `convert`, and `cat`.
     - Added row-wise JMESPath queries via `--jmespath` / `--jp` on `view`, `convert`, and `cat`. Object results become columns; non-object results go into a `value` column. `--sql` and `--jp` are mutually exclusive.

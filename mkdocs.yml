@@ -31,6 +31,7 @@ repo_url: 'https://github.com/ctongfei/tab'
 
 nav:
   - 'Introduction': 'index.md'
+  - 'Configuration': 'configuration.md'
   - 'Cloud support': 'cloud.md'
   - 'CLI reference': 'cli-ref.md'
 

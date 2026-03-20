@@ -12,27 +12,67 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 from tab_cli import config
-from tab_cli.config import Config
-from tab_cli.handlers import TableWriter, infer_reader, infer_writer, is_stdin, read_stdin
+from tab_cli.config import Config, load_config_file
+from tab_cli.handlers import (
+    TableWriter,
+    infer_reader,
+    infer_writer,
+    is_stdin,
+    read_stdin,
+)
 from tab_cli.handlers.base import TableSchema, TableSummary
 
 # Reusable type aliases for common CLI options
-PathArg: TypeAlias = Annotated[str, typer.Argument(help="Path to the data file or directory")]
-PathsArg: TypeAlias = Annotated[list[str], typer.Argument(help="Paths to the data files or directories")]
-SrcArg: TypeAlias = Annotated[str, typer.Argument(help="Path to the source file or directory")]
-DstArg: TypeAlias = Annotated[str, typer.Argument(help="Path to the destination file or directory")]
-InputOpt: TypeAlias = Annotated[Optional[str], typer.Option("-i", "--input-format", help="Input format, auto-detected from extension if omitted")]
-OutputOpt: TypeAlias = Annotated[Optional[str], typer.Option("-o", "--output-format", help="Output format")]
-SqlOpt: TypeAlias = Annotated[Optional[str], typer.Option("--sql", help="SQL query to apply (table is available as 't')")]
+PathArg: TypeAlias = Annotated[
+    str, typer.Argument(help="Path to the data file or directory")
+]
+PathsArg: TypeAlias = Annotated[
+    list[str], typer.Argument(help="Paths to the data files or directories")
+]
+SrcArg: TypeAlias = Annotated[
+    str, typer.Argument(help="Path to the source file or directory")
+]
+DstArg: TypeAlias = Annotated[
+    str, typer.Argument(help="Path to the destination file or directory")
+]
+InputOpt: TypeAlias = Annotated[
+    Optional[str],
+    typer.Option(
+        "-i",
+        "--input-format",
+        help="Input format, auto-detected from extension if omitted",
+    ),
+]
+OutputOpt: TypeAlias = Annotated[
+    Optional[str], typer.Option("-o", "--output-format", help="Output format")
+]
+SqlOpt: TypeAlias = Annotated[
+    Optional[str],
+    typer.Option("--sql", help="SQL query to apply (table is available as 't')"),
+]
 JmespathOpt: TypeAlias = Annotated[
     Optional[str],
-    typer.Option("--jmespath", "--jp", help="JMESPath expression to apply to each row as JSON"),
+    typer.Option(
+        "--jmespath", "--jp", help="JMESPath expression to apply to each row as JSON"
+    ),
 ]
-LimitOpt: TypeAlias = Annotated[Optional[int], typer.Option("--limit", help="Maximum number of rows to display")]
-SkipOpt: TypeAlias = Annotated[int, typer.Option("--skip", help="Number of rows to skip")]
-MaxCellLenOpt: TypeAlias = Annotated[Optional[int], typer.Option("--max-cell-len", help="Truncate cell contents longer than this")]
-TableSvgOpt: TypeAlias = Annotated[bool, typer.Option("--table-svg", help="Output table as SVG")]
-NumPartitionsOpt: TypeAlias = Annotated[Optional[int], typer.Option("-n", "--num-partitions", help="Number of output partitions")]
+LimitOpt: TypeAlias = Annotated[
+    Optional[int], typer.Option("--limit", help="Maximum number of rows to display")
+]
+SkipOpt: TypeAlias = Annotated[
+    int, typer.Option("--skip", help="Number of rows to skip")
+]
+MaxCellLenOpt: TypeAlias = Annotated[
+    Optional[int],
+    typer.Option("--max-cell-len", help="Truncate cell contents longer than this"),
+]
+TableSvgOpt: TypeAlias = Annotated[
+    bool, typer.Option("--table-svg", help="Output table as SVG")
+]
+NumPartitionsOpt: TypeAlias = Annotated[
+    Optional[int],
+    typer.Option("-n", "--num-partitions", help="Number of output partitions"),
+]
 
 app = typer.Typer(
     help="A CLI tool for viewing and manipulating tabular data.",
@@ -51,11 +91,12 @@ def main_callback(
     ] = False,
     log_level: Annotated[
         str,
-        typer.Option("--log-level", help="Log level from {DEBUG, INFO, WARNING, ERROR, CRITICAL}"),
+        typer.Option(
+            "--log-level", help="Log level from {DEBUG, INFO, WARNING, ERROR, CRITICAL}"
+        ),
     ] = "INFO",
 ) -> None:
     """Global options for tab_cli CLI."""
-    config.config.az_url_authority_is_account = az_url_authority_is_account
     logger.remove()
     logger.add(
         RichHandler(
@@ -66,6 +107,10 @@ def main_callback(
         format="{message}",
         level=log_level.upper(),
     )
+    load_config_file()
+    # CLI flags override config file values
+    if az_url_authority_is_account:
+        config.config.az_url_authority_is_account = az_url_authority_is_account
 
 
 def _apply_sql(lf: pl.LazyFrame, sql: str | None) -> pl.LazyFrame:
@@ -94,21 +139,29 @@ def _transform_jmespath_batch(
             if mode is None:
                 mode = "object"
             elif mode != "object":
-                raise ValueError("JMESPath query must return a consistent shape across rows")
+                raise ValueError(
+                    "JMESPath query must return a consistent shape across rows"
+                )
 
             if expected_columns is not None:
                 extra_columns = set(result) - set(expected_columns)
                 if extra_columns:
                     extras = ", ".join(sorted(extra_columns))
-                    raise ValueError(f"JMESPath query produced unexpected columns: {extras}")
-                normalized_row = {column: result.get(column) for column in expected_columns}
+                    raise ValueError(
+                        f"JMESPath query produced unexpected columns: {extras}"
+                    )
+                normalized_row = {
+                    column: result.get(column) for column in expected_columns
+                }
             else:
                 normalized_row = result
         else:
             if mode is None:
                 mode = "value"
             elif mode != "value":
-                raise ValueError("JMESPath query must return a consistent shape across rows")
+                raise ValueError(
+                    "JMESPath query must return a consistent shape across rows"
+                )
             normalized_row = {"value": result}
 
         rows.append(normalized_row)
@@ -143,10 +196,14 @@ def _apply_jmespath(lf: pl.LazyFrame, expression: str) -> pl.LazyFrame:
     )
 
 
-def _apply_query(lf: pl.LazyFrame, sql: str | None, jmespath_expr: str | None) -> pl.LazyFrame:
+def _apply_query(
+    lf: pl.LazyFrame, sql: str | None, jmespath_expr: str | None
+) -> pl.LazyFrame:
     """Apply exactly zero or one supported query transform to a LazyFrame."""
     if sql is not None and jmespath_expr is not None:
-        raise ValueError("At most one query may be provided: use either --sql or --jmespath/--jp")
+        raise ValueError(
+            "At most one query may be provided: use either --sql or --jmespath/--jp"
+        )
     if sql is not None:
         return _apply_sql(lf, sql)
     if jmespath_expr is not None:
@@ -196,10 +253,17 @@ def view(
         reader = infer_reader(path, format=input)
         lf = reader.read(path)
     lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
-    lf, truncated = _apply_limit(lf, limit=limit, skip=skip, default_limit=20 if limit is None else None)
-    writer = infer_writer("table-svg" if table_svg else None, truncated=truncated, max_cell_len=max_cell_len)
+    lf, truncated = _apply_limit(
+        lf, limit=limit, skip=skip, default_limit=20 if limit is None else None
+    )
+    writer = infer_writer(
+        "table-svg" if table_svg else None,
+        truncated=truncated,
+        max_cell_len=max_cell_len,
+    )
     for chunk in writer.write(lf):
         sys.stdout.buffer.write(chunk)
+
 
 @app.command()
 def schema(
@@ -258,7 +322,9 @@ def convert(
         elif input is not None:
             writer = infer_writer(format=input)
         else:
-            raise ValueError("Output format (-o/--output-format) is required when reading from stdin (-)")
+            raise ValueError(
+                "Output format (-o/--output-format) is required when reading from stdin (-)"
+            )
         assert isinstance(writer, TableWriter)
         writer.write_to_path(lf, dst, partitions=num_partitions)
     else:
@@ -305,7 +371,9 @@ def cat(
         writer = infer_writer(format=input)
         assert isinstance(writer, TableWriter)
     else:
-        raise ValueError("Output format (-o/--output-format) or input format (-i/--input-format) is required when reading from stdin (-)")
+        raise ValueError(
+            "Output format (-o/--output-format) or input format (-i/--input-format) is required when reading from stdin (-)"
+        )
     for chunk in writer.write(lf):
         sys.stdout.buffer.write(chunk)
 

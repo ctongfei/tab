@@ -30,7 +30,7 @@ def _scan_parquet_with_pyarrow_fallback(
             "Polars native Parquet reader failed ({}), retrying with PyArrow backend",
             e,
         )
-        return pl.scan_parquet(url, storage_options=storage_options, use_pyarrow=True)
+        return pl.read_parquet(url, storage_options=storage_options, use_pyarrow=True).lazy()
 
 
 class ParquetFormat(FormatHandler):

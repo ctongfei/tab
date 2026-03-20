@@ -143,6 +143,7 @@ Use it as the default operating guide when changing code in this repo.
 ## Documentation
 
 - Update `docs/` and CLI help text when changing user-facing behavior.
+- Update `CHANGELOG.md` with a clear description of user-facing changes and bug fixes.
 - Keep examples aligned with the actual command names and flags.
 - If you change build, test, or auth flows, reflect that in this file too.
 
