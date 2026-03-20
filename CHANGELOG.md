@@ -1,3 +1,5 @@
+  - 0.1.7:
+    - Optional dependency groups are now named `tab-cli[s3|gs|az]`, in accordance with the protocol name.
   - 0.1.6:
     - Fixed bug in pyarrow loading of Parquet files.
     - Added global config file support: settings can be persisted in `~/.config/tab/config.json`. Config file values serve as defaults that CLI flags override.
