@@ -245,6 +245,26 @@
   
   
     <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../cloud/" class="md-nav__link">
         
   
@@ -490,7 +510,11 @@
 </tr>
 <tr>
 <td><code>--sql</code></td>
-<td>SQL query to apply before displaying. The table is available as <code>t</code>.</td>
+<td>SQL query to apply before displaying. The table is available as <code>t</code>. Mutually exclusive with <code>--jmespath</code>.</td>
+</tr>
+<tr>
+<td><code>--jmespath</code> / <code>--jp</code></td>
+<td>JMESPath expression to apply to each row as JSON. Object outputs become columns; non-object outputs go to a <code>value</code> column. The result shape must stay consistent across rows.</td>
 </tr>
 <tr>
 <td><code>--limit</code></td>
@@ -567,7 +591,11 @@
 </tr>
 <tr>
 <td><code>--sql</code></td>
-<td>SQL query to apply before writing. The table is available as <code>t</code>.</td>
+<td>SQL query to apply before writing. The table is available as <code>t</code>. Mutually exclusive with <code>--jmespath</code>.</td>
+</tr>
+<tr>
+<td><code>--jmespath</code> / <code>--jp</code></td>
+<td>JMESPath expression to apply to each row as JSON. Object outputs become columns; non-object outputs go to a <code>value</code> column. The result shape must stay consistent across rows.</td>
 </tr>
 <tr>
 <td><code>-n</code> / <code>--num-partitions</code></td>
@@ -598,7 +626,11 @@
 </tr>
 <tr>
 <td><code>--sql</code></td>
-<td>SQL query to apply after concatenation. The table is available as <code>t</code>.</td>
+<td>SQL query to apply after concatenation. The table is available as <code>t</code>. Mutually exclusive with <code>--jmespath</code>.</td>
+</tr>
+<tr>
+<td><code>--jmespath</code> / <code>--jp</code></td>
+<td>JMESPath expression to apply to each row as JSON. Object outputs become columns; non-object outputs go to a <code>value</code> column. The result shape must stay consistent across rows.</td>
 </tr>
 </tbody>
 </table>
