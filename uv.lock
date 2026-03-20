@@ -2253,7 +2253,7 @@ wheels = [
 
 [[package]]
 name = "tab-cli"
-version = "0.1.5"
+version = "0.1.7"
 source = { editable = "." }
 dependencies = [
     { name = "blobfile" },
@@ -2268,11 +2268,11 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-azure = [
+az = [
     { name = "adlfs" },
     { name = "azure-identity" },
 ]
-gcs = [
+gs = [
     { name = "gcsfs" },
     { name = "google-auth" },
 ]
@@ -2291,13 +2291,13 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "adlfs", marker = "extra == 'azure'", specifier = ">=2025.1.0" },
-    { name = "azure-identity", marker = "extra == 'azure'", specifier = ">=1.10.0" },
+    { name = "adlfs", marker = "extra == 'az'", specifier = ">=2025.1.0" },
+    { name = "azure-identity", marker = "extra == 'az'", specifier = ">=1.10.0" },
     { name = "blobfile", specifier = ">=3.0" },
     { name = "boto3", marker = "extra == 's3'", specifier = ">=1.28.0" },
     { name = "fsspec", specifier = ">=2025.1.0" },
-    { name = "gcsfs", marker = "extra == 'gcs'", specifier = ">=2025.1.0" },
-    { name = "google-auth", marker = "extra == 'gcs'", specifier = ">=2.27.0" },
+    { name = "gcsfs", marker = "extra == 'gs'", specifier = ">=2025.1.0" },
+    { name = "google-auth", marker = "extra == 'gs'", specifier = ">=2.27.0" },
     { name = "jmespath", specifier = ">=1.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "polars", specifier = ">=1.0" },

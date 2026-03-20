@@ -22,7 +22,7 @@ tab view data.csv
 ```
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ctongfei/tab/main/docs/assets/test.svg" alt="tab view" width="680">
+  <img src="https://raw.githubusercontent.com/ctongfei/tab/refs/heads/gh-pages/assets/test.svg" alt="tab view" width="680">
 </p>
 
 ### Query with SQL
@@ -34,7 +34,7 @@ tab view --sql 'SELECT * FROM t WHERE Metric_A_Value > 80' data.csv
 ```
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ctongfei/tab/main/docs/assets/test-where.svg" alt="tab view --sql" width="680">
+  <img src="https://raw.githubusercontent.com/ctongfei/tab/refs/heads/gh-pages/assets/test-where.svg" alt="tab view --sql" width="680">
 </p>
 
 ### Reshape rows with JMESPath
