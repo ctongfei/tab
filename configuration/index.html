@@ -446,6 +446,10 @@
 cat<span class="w"> </span>&gt;<span class="w"> </span>~/.config/tab/config.json<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
 <span class="s">{</span>
 <span class="s">  &quot;az_url_authority_is_account&quot;: false,</span>
+<span class="s">  &quot;default_num_view_rows&quot;: 20,</span>
+<span class="s">  &quot;log_level&quot;: &quot;INFO&quot;,</span>
+<span class="s">  &quot;max_cell_length&quot;: null,</span>
+<span class="s">  &quot;num_remote_workers&quot;: 8,</span>
 <span class="s">  &quot;sampling_size_for_schema_inference&quot;: 32</span>
 <span class="s">}</span>
 <span class="s">EOF</span>
@@ -466,6 +470,30 @@ cat<span class="w"> </span>&gt;<span class="w"> </span>~/.config/tab/config.json
 <td><code>bool</code></td>
 <td><code>false</code></td>
 <td>Interpret <code>az://</code> URL authority as storage account name instead of container name.</td>
+</tr>
+<tr>
+<td><code>default_num_view_rows</code></td>
+<td><code>int</code></td>
+<td><code>20</code></td>
+<td>Default number of rows shown by <code>tab view</code> when <code>--limit</code> is omitted.</td>
+</tr>
+<tr>
+<td><code>log_level</code></td>
+<td><code>str</code></td>
+<td><code>"INFO"</code></td>
+<td>Default CLI log level when <code>--log-level</code> is omitted.</td>
+</tr>
+<tr>
+<td><code>max_cell_length</code></td>
+<td><code>int \| null</code></td>
+<td><code>null</code></td>
+<td>Default maximum cell length for <code>tab view</code>. The CLI <code>--max-cell-len</code> flag overrides it.</td>
+</tr>
+<tr>
+<td><code>num_remote_workers</code></td>
+<td><code>int</code></td>
+<td><code>8</code></td>
+<td>Maximum worker threads for remote per-partition summary work such as Parquet row counts.</td>
 </tr>
 <tr>
 <td><code>sampling_size_for_schema_inference</code></td>
