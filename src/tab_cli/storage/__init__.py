@@ -1,13 +1,10 @@
 """Storage backends for filesystem abstraction."""
 
-import os
-from dataclasses import dataclass
 from loguru import logger
-from urllib.parse import urlparse
 
 from tab_cli.storage.base import FileInfo, StorageBackend
 from tab_cli.storage.local import LocalBackend
-from tab_cli.url_parser import parse_url, ParsedUrl
+from tab_cli.url_parser import parse_url
 
 __all__ = [
     "FileInfo",
@@ -46,12 +43,17 @@ def get_backend(url: str) -> StorageBackend:
 
     # Local filesystem
     if parsed.scheme == "file" or not parsed.scheme:
+        logger.debug(f"Inferred storage backend LocalBackend for '{url}'")
         return LocalBackend()
 
     elif parsed.scheme == "az":
         from tab_cli import config
         from tab_cli.storage.az import AzBackend
 
+        logger.debug(
+            f"Inferred storage backend AzBackend for '{url}' "
+            f"(az_url_authority_is_account={config.config.az_url_authority_is_account})"
+        )
         return AzBackend(
             account=parsed.account,
             container=parsed.bucket,
@@ -62,6 +64,7 @@ def get_backend(url: str) -> StorageBackend:
         from tab_cli.storage.az import AzBackend
 
         # abfs/abfss always uses account in URL or env
+        logger.debug(f"Inferred storage backend AzBackend for ADLS URL '{url}'")
         return AzBackend(
             account=parsed.account,
             container=parsed.bucket,
@@ -70,14 +73,21 @@ def get_backend(url: str) -> StorageBackend:
     # Google Cloud Storage
     elif parsed.scheme == "gs":
         from tab_cli.storage.gcloud import GcloudBackend
+
+        logger.debug(f"Inferred storage backend GcloudBackend for '{url}'")
         return GcloudBackend()
 
     # AWS S3
     elif parsed.scheme == "s3":
         from tab_cli.storage.aws import AwsBackend
+
+        logger.debug(f"Inferred storage backend AwsBackend for '{url}'")
         return AwsBackend()
 
     # All other protocols via fsspec
     from tab_cli.storage.fsspec import FsspecBackend
 
+    logger.debug(
+        f"Inferred generic fsspec backend for protocol '{parsed.scheme}' and URL '{url}'"
+    )
     return FsspecBackend(parsed.scheme)

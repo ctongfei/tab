@@ -14,7 +14,7 @@ from typing import BinaryIO, Iterator, Any
 import fsspec
 from loguru import logger
 
-from tab_cli.storage.base import FileInfo, StorageBackend
+from tab_cli.storage.base import FileInfo, StorageBackend, has_glob_pattern
 from tab_cli.url_parser import parse_url
 
 
@@ -25,7 +25,7 @@ class FsspecBackend(StorageBackend):
     Subclasses can override _to_internal and _to_uri to customize path handling.
     """
 
-    fs: fsspec.AbstractFileSystem
+    fs: fsspec.AbstractFileSystem | None
     protocol: str
 
     def __init__(self, protocol: str) -> None:
@@ -53,29 +53,42 @@ class FsspecBackend(StorageBackend):
             return internal_path
         return f"{self.protocol}://{internal_path}"
 
+    def _require_fs(self) -> fsspec.AbstractFileSystem:
+        if self.fs is None:
+            raise RuntimeError(f"Filesystem for {self.protocol}:// is not initialized")
+        return self.fs
+
     def open(self, url: str) -> BinaryIO:
-        return self.fs.open(self._to_internal(url), "rb")
+        return self._require_fs().open(self._to_internal(url), "rb")
 
     def list_files(self, url: str, extension: str) -> Iterator[FileInfo]:
         internal_path = self._to_internal(url)
-        pattern = f"{internal_path}/**/*{extension}"
-        files = self.fs.glob(pattern)
+        is_glob = has_glob_pattern(url)
+        if is_glob:
+            pattern = internal_path
+        elif extension:
+            pattern = f"{internal_path}/**/*.{extension}"
+        else:
+            pattern = f"{internal_path}/**/*"
+        files = self._require_fs().glob(pattern)
         logger.debug(f"{len(files)} files found.")
         for path in sorted(files):
-            info = self.fs.info(path)
+            if not is_glob and extension and not path.endswith(f".{extension}"):
+                continue
+            info = self._require_fs().info(path)
             yield FileInfo(url=self._to_uri(path), size=info["size"])
 
     def size(self, url: str) -> int:
-        return self.fs.size(self._to_internal(url))
+        return self._require_fs().size(self._to_internal(url))
 
     def is_directory(self, url: str) -> bool:
         path = self._to_internal(url)
         try:
-            info = self.fs.info(path)
+            info = self._require_fs().info(path)
             return info.get("type") == "directory"
         except FileNotFoundError:
             try:
-                contents = self.fs.ls(path, detail=False)
+                contents = self._require_fs().ls(path, detail=False)
                 return len(contents) > 0
             except Exception:
                 return False

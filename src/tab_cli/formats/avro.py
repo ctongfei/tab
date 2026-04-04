@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable
 from io import BytesIO
-from typing import BinaryIO
+from typing import BinaryIO, Callable
 
 import polars as pl
 import polars_fastavro
@@ -32,7 +32,12 @@ class AvroFormat(FormatHandler):
         # polars_fastavro doesn't support storage_options
         return list(polars_fastavro.scan_avro(url).collect_schema().items())
 
-    def count_rows(self, url: str, storage_options: dict[str, str] | None = None) -> int:
+    def count_rows(
+        self,
+        url: str,
+        storage_options: dict[str, str] | None = None,
+        opener: Callable[[str], BinaryIO] | None = None,
+    ) -> int:
         # polars_fastavro doesn't support storage_options
         return polars_fastavro.scan_avro(url).select(pl.len()).collect().item()
 

@@ -1,6 +1,8 @@
+import importlib
 import os
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 
@@ -32,7 +34,7 @@ class GcloudBackend(CloudFsspecBackend):
     def __init__(self) -> None:
         """Initialize the Google Cloud Storage backend."""
         try:
-            import gcsfs
+            gcsfs = importlib.import_module("gcsfs")
         except ImportError as e:
             raise ImportError("Package 'gcsfs' is required for gs:// URLs. Install with: pip install gcsfs") from e
 
@@ -41,32 +43,32 @@ class GcloudBackend(CloudFsspecBackend):
 
         # 1. Try GOOGLE_APPLICATION_CREDENTIALS environment variable
         credentials_file = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-        if credentials_file and os.path.exists(credentials_file):
-            logger.debug("Authenticating to GCS using GOOGLE_APPLICATION_CREDENTIALS: {}", credentials_file)
+        if credentials_file is not None and os.path.exists(credentials_file):
+            logger.debug(f"Authenticating to GCS using GOOGLE_APPLICATION_CREDENTIALS: {credentials_file}")
             try:
                 self.fs = self.gcsfs.GCSFileSystem(token=credentials_file)
                 self.method = GcloudAuthMethod.SERVICE_ACCOUNT
                 self.token = credentials_file
                 return
             except Exception as e:
-                logger.debug("GOOGLE_APPLICATION_CREDENTIALS authentication failed: {}", e)
+                logger.debug(f"GOOGLE_APPLICATION_CREDENTIALS authentication failed: {e}")
 
         # 2. Try ADC file (application_default_credentials.json)
         adc_path = self._get_adc_path()
-        if adc_path and adc_path.exists():
-            logger.debug("Authenticating to GCS using ADC file: {}", adc_path)
+        if adc_path is not None and adc_path.exists():
+            logger.debug(f"Authenticating to GCS using ADC file: {adc_path}")
             try:
                 self.fs = self.gcsfs.GCSFileSystem(token=str(adc_path))
                 self.method = GcloudAuthMethod.ADC
                 self.token = str(adc_path)
                 return
             except Exception as e:
-                logger.debug("ADC file authentication failed: {}", e)
+                logger.debug(f"ADC file authentication failed: {e}")
 
         # 3. Fallback to gcloud CLI login (gcloud auth print-access-token)
         logger.debug("Attempting to get access token from gcloud CLI")
         access_token = self._get_access_token_via_cli()
-        if access_token:
+        if access_token is not None:
             logger.debug("Authenticating to GCS using gcloud CLI access token")
             try:
                 self.fs = self.gcsfs.GCSFileSystem(token=access_token)
@@ -74,7 +76,7 @@ class GcloudBackend(CloudFsspecBackend):
                 self.token = access_token
                 return
             except Exception as e:
-                logger.debug("gcloud CLI access token authentication failed: {}", e)
+                logger.debug(f"gcloud CLI access token authentication failed: {e}")
 
         # 4. Try google.auth.default() via token="google_default"
         logger.debug("Authenticating to GCS using google.auth.default()")
@@ -84,7 +86,7 @@ class GcloudBackend(CloudFsspecBackend):
             self.token = "google_default"
             return
         except Exception as e:
-            logger.debug("google.auth.default() authentication failed: {}", e)
+            logger.debug(f"google.auth.default() authentication failed: {e}")
 
         if self.fs is None:
             raise ValueError(
@@ -139,7 +141,7 @@ class GcloudBackend(CloudFsspecBackend):
         parsed = parse_url(url)
         return f"gs://{parsed.bucket}/{parsed.path}"
 
-    def storage_options(self, url: str) -> dict[str, str]:
+    def storage_options(self, url: str) -> dict[str, Any] | None:
         """Return storage options for Polars GCS access.
 
         Returns:
@@ -158,16 +160,17 @@ class GcloudBackend(CloudFsspecBackend):
                 "service_account": self.token,
                 "google_service_account": self.token,
             }
-        elif self.method == GcloudAuthMethod.GCLOUD_CLI:
+        if self.method == GcloudAuthMethod.GCLOUD_CLI:
             # For CLI token, we need to refresh it for Polars
             # since the token may have expired
             fresh_token = self._get_access_token_via_cli()
-            if fresh_token:
+            if fresh_token is not None:
                 return {
                     "token": fresh_token,
                 }
             return {"token": self.token}
-        elif self.method == GcloudAuthMethod.GOOGLE_DEFAULT:
+        if self.method == GcloudAuthMethod.GOOGLE_DEFAULT:
             return {
                 "token": "google_default",
             }
+        return None

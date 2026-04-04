@@ -2,7 +2,7 @@
 
 import json
 from collections.abc import Iterable
-from typing import BinaryIO
+from typing import BinaryIO, Callable
 
 import polars as pl
 
@@ -27,7 +27,12 @@ class JsonlFormat(FormatHandler):
     def collect_schema(self, url: str, storage_options: dict[str, str] | None = None) -> list[tuple[str, pl.DataType]]:
         return list(pl.scan_ndjson(url, storage_options=storage_options).collect_schema().items())
 
-    def count_rows(self, url: str, storage_options: dict[str, str] | None = None) -> int:
+    def count_rows(
+        self,
+        url: str,
+        storage_options: dict[str, str] | None = None,
+        opener: Callable[[str], BinaryIO] | None = None,
+    ) -> int:
         return pl.scan_ndjson(url, storage_options=storage_options).select(pl.len()).collect().item()
 
     def write(self, lf: pl.LazyFrame) -> Iterable[bytes]:

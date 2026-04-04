@@ -1,5 +1,7 @@
+import importlib
 import os
 from enum import Enum
+from typing import Any
 
 from loguru import logger
 
@@ -39,7 +41,7 @@ class AwsBackend(CloudFsspecBackend):
             anon: If True, use anonymous access (for public buckets only).
         """
         try:
-            import s3fs
+            s3fs = importlib.import_module("s3fs")
         except ImportError as e:
             raise ImportError("Package 's3fs' is required for s3:// URLs. Install with: pip install s3fs") from e
 
@@ -64,7 +66,7 @@ class AwsBackend(CloudFsspecBackend):
             return
 
         # 1. Try explicit credentials from environment
-        if self.access_key and self.secret_key:
+        if self.access_key is not None and self.secret_key is not None:
             logger.debug("Authenticating to S3 using explicit credentials from environment")
             try:
                 self.fs = self.s3fs.S3FileSystem(
@@ -75,18 +77,18 @@ class AwsBackend(CloudFsspecBackend):
                 self.method = AwsAuthMethod.EXPLICIT_KEYS
                 return
             except Exception as e:
-                logger.debug("Explicit credentials authentication failed: {}", e)
+                logger.debug(f"Explicit credentials authentication failed: {e}")
 
         # 2. Fall back to profile-based auth (boto3 credential chain)
         # This handles: ~/.aws/credentials, ~/.aws/config, SSO, assume role, instance metadata
         profile_desc = f"profile '{self.profile}'" if self.profile else "default credential chain"
-        logger.debug("Authenticating to S3 using {}", profile_desc)
+        logger.debug(f"Authenticating to S3 using {profile_desc}")
         try:
             self.fs = self.s3fs.S3FileSystem(profile=self.profile)
             self.method = AwsAuthMethod.PROFILE
             return
         except Exception as e:
-            logger.debug("Profile-based authentication failed: {}", e)
+            logger.debug(f"Profile-based authentication failed: {e}")
 
         if self.fs is None:
             raise ValueError(
@@ -107,7 +109,7 @@ class AwsBackend(CloudFsspecBackend):
         parsed = parse_url(url)
         return f"s3://{parsed.bucket}/{parsed.path}"
 
-    def storage_options(self, url: str) -> dict[str, str] | None:
+    def storage_options(self, url: str) -> dict[str, Any] | None:
         """Return storage options for Polars S3 access.
 
         Returns:
@@ -121,7 +123,7 @@ class AwsBackend(CloudFsspecBackend):
             }
 
         if self.method == AwsAuthMethod.EXPLICIT_KEYS:
-            opts = {
+            opts: dict[str, Any] = {
                 # s3fs keys
                 "key": self.access_key,
                 "secret": self.secret_key,
@@ -133,7 +135,6 @@ class AwsBackend(CloudFsspecBackend):
                 opts["token"] = self.session_token
                 opts["aws_session_token"] = self.session_token
             if self.region:
-                opts["client_kwargs"] = {"region_name": self.region}
                 opts["aws_region"] = self.region
             return opts
 
@@ -143,7 +144,7 @@ class AwsBackend(CloudFsspecBackend):
             try:
                 credentials = self._get_credentials_from_session()
                 if credentials:
-                    opts = {
+                    opts: dict[str, Any] = {
                         # s3fs keys
                         "key": credentials["access_key"],
                         "secret": credentials["secret_key"],
@@ -155,30 +156,28 @@ class AwsBackend(CloudFsspecBackend):
                         opts["token"] = credentials["token"]
                         opts["aws_session_token"] = credentials["token"]
                     if self.region:
-                        opts["client_kwargs"] = {"region_name": self.region}
                         opts["aws_region"] = self.region
                     return opts
             except Exception as e:
-                logger.debug("Failed to resolve credentials from session: {}", e)
+                logger.debug(f"Failed to resolve credentials from session: {e}")
 
             # Fallback: just pass the profile and hope Polars/fsspec can handle it
             opts = {}
             if self.profile:
                 opts["profile"] = self.profile
             if self.region:
-                opts["client_kwargs"] = {"region_name": self.region}
                 opts["aws_region"] = self.region
             return opts if opts else None
 
         return None
 
-    def _get_credentials_from_session(self) -> dict | None:
+    def _get_credentials_from_session(self) -> dict[str, str | None] | None:
         """Get resolved credentials from boto3 session."""
         try:
-            import boto3
+            boto3 = importlib.import_module("boto3")
             session = boto3.Session(profile_name=self.profile)
             credentials = session.get_credentials()
-            if credentials:
+            if credentials is not None:
                 frozen = credentials.get_frozen_credentials()
                 return {
                     "access_key": frozen.access_key,

@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import BinaryIO
+from typing import BinaryIO, Callable
 
 import polars as pl
 
@@ -44,7 +44,12 @@ class FormatHandler(ABC):
         pass
 
     @abstractmethod
-    def count_rows(self, url: str, storage_options: dict[str, str] | None = None) -> int:
+    def count_rows(
+        self,
+        url: str,
+        storage_options: dict[str, str] | None = None,
+        opener: Callable[[str], BinaryIO] | None = None,
+    ) -> int:
         """Count rows in the file."""
         pass
 

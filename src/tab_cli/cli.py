@@ -79,6 +79,8 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+DEFAULT_VIEW_TRUNCATION_PROBE_ROWS = 1
+
 
 @app.callback()
 def main_callback(
@@ -90,13 +92,18 @@ def main_callback(
         ),
     ] = False,
     log_level: Annotated[
-        str,
+        str | None,
         typer.Option(
-            "--log-level", help="Log level from {DEBUG, INFO, WARNING, ERROR, CRITICAL}"
+            "--log-level",
+            help="Log level from {DEBUG, INFO, WARNING, ERROR, CRITICAL}; defaults to config when omitted",
         ),
-    ] = "INFO",
+    ] = None,
 ) -> None:
     """Global options for tab_cli CLI."""
+    load_config_file()
+    effective_log_level = (
+        log_level.upper() if log_level is not None else config.config.log_level.upper()
+    )
     logger.remove()
     logger.add(
         RichHandler(
@@ -105,9 +112,8 @@ def main_callback(
             markup=True,
         ),
         format="{message}",
-        level=log_level.upper(),
+        level=effective_log_level,
     )
-    load_config_file()
     # CLI flags override config file values
     if az_url_authority_is_account:
         config.config.az_url_authority_is_account = az_url_authority_is_account
@@ -176,12 +182,20 @@ def _apply_jmespath(lf: pl.LazyFrame, expression: str) -> pl.LazyFrame:
 
     compiled = jmespath.compile(expression)
     sample_df = lf.slice(0, Config.sampling_size_for_schema_inference).collect()
+    logger.debug(
+        "Inferring JMESPath output schema from "
+        f"{Config.sampling_size_for_schema_inference} sampled row(s)"
+    )
     if sample_df.is_empty():
+        logger.debug("JMESPath schema inference sample was empty; returning empty LazyFrame")
         return pl.DataFrame().lazy()
 
     transformed_sample, result_mode = _transform_jmespath_batch(sample_df, compiled)
     output_schema = transformed_sample.schema
     expected_columns = tuple(transformed_sample.columns)
+    logger.debug(
+        f"Inferred JMESPath result mode '{result_mode}' with columns {expected_columns}"
+    )
 
     return lf.map_batches(
         lambda batch: _transform_jmespath_batch(
@@ -223,16 +237,119 @@ def _apply_limit(
     and returns whether the data was truncated.
     """
     if limit is None and default_limit is not None:
+        logger.debug(
+            f"Applying inferred default row limit {default_limit} with skip {skip}"
+        )
         lf = lf.slice(skip, length=default_limit + 1)
         df = lf.collect()
         truncated = len(df) > default_limit
         if truncated:
             df = df.head(default_limit)
+            logger.debug("Detected truncated preview after applying inferred default row limit")
         return df.lazy(), truncated
-    else:
-        if skip > 0 or limit is not None:
-            lf = lf.slice(skip, length=limit)
-        return lf, False
+    if skip > 0 or limit is not None:
+        lf = lf.slice(skip, length=limit)
+    return lf, False
+
+
+def _read_source(path: str, input_format: str | None) -> tuple[pl.LazyFrame, str | None]:
+    """Read a source path and return its LazyFrame and inferred format."""
+    if is_stdin(path):
+        logger.debug(
+            "Using stdin source with explicit format "
+            f"'{input_format.lower() if input_format is not None else None}'"
+        )
+        return (
+            read_stdin(format=input_format),
+            input_format.lower() if input_format is not None else None,
+        )
+
+    reader = infer_reader(path, format=input_format)
+    logger.debug(
+        f"Read source '{path}' using inferred format '{reader.format.extension()}'"
+    )
+    return reader.read(path), reader.format.extension()
+
+
+def _prepare_view_frame(
+    path: str,
+    input_format: str | None,
+    sql: str | None,
+    jmespath_expr: str | None,
+    limit: int | None,
+    skip: int,
+) -> tuple[pl.LazyFrame, bool]:
+    """Prepare the LazyFrame used by `tab view` and report truncation."""
+    default_view_rows = config.config.default_num_view_rows
+
+    if is_stdin(path):
+        logger.debug("Preparing view for stdin input")
+        lf = read_stdin(format=input_format)
+        lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
+        return _apply_limit(
+            lf,
+            limit=limit,
+            skip=skip,
+            default_limit=default_view_rows if limit is None else None,
+        )
+
+    reader = infer_reader(path, format=input_format)
+    if sql is None and jmespath_expr is None:
+        preview_limit = (
+            limit
+            if limit is not None
+            else default_view_rows + DEFAULT_VIEW_TRUNCATION_PROBE_ROWS
+        )
+        logger.debug(
+            f"Using preview read for '{path}' with inferred preview limit "
+            f"{preview_limit} and skip {skip}"
+        )
+        lf = reader.read_preview(path, limit=preview_limit, offset=skip)
+        if limit is not None:
+            return lf, False
+
+        df = lf.collect()
+        truncated = len(df) > default_view_rows
+        if truncated:
+            df = df.head(default_view_rows)
+        return df.lazy(), truncated
+
+    logger.debug(f"Using full read for '{path}' because a query transform was provided")
+    lf = reader.read(path)
+    lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
+    return _apply_limit(
+        lf,
+        limit=limit,
+        skip=skip,
+        default_limit=default_view_rows if limit is None else None,
+    )
+
+
+def _resolve_cat_output_format(
+    paths: list[str],
+    input_format: str | None,
+) -> tuple[list[pl.LazyFrame], str | None]:
+    """Read all inputs for `tab cat` and validate format consistency."""
+    files: list[pl.LazyFrame] = []
+    resolved_format = input_format.lower() if input_format is not None else None
+    if resolved_format is not None:
+        logger.debug(f"Using explicit shared input format '{resolved_format}' for `tab cat`")
+
+    for path in paths:
+        lf, current_format = _read_source(path, input_format)
+        if current_format is not None:
+            if resolved_format is None:
+                resolved_format = current_format
+                logger.debug(
+                    f"Inferred shared `tab cat` format '{resolved_format}' from '{path}'"
+                )
+            elif current_format != resolved_format:
+                raise ValueError(
+                    "All inputs to `tab cat` must use the same format unless -i/--input-format is provided"
+                )
+        files.append(lf)
+
+    return files, resolved_format
 
 
 @app.command()
@@ -247,19 +364,25 @@ def view(
     table_svg: TableSvgOpt = False,
 ) -> None:
     """View tabular data as a formatted table."""
-    if is_stdin(path):
-        lf = read_stdin(format=input)
-    else:
-        reader = infer_reader(path, format=input)
-        lf = reader.read(path)
-    lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
-    lf, truncated = _apply_limit(
-        lf, limit=limit, skip=skip, default_limit=20 if limit is None else None
+    effective_max_cell_len = (
+        max_cell_len if max_cell_len is not None else config.config.max_cell_length
+    )
+    if max_cell_len is None and effective_max_cell_len is not None:
+        logger.debug(
+            f"Inferred max_cell_len={effective_max_cell_len} for `tab view` from config"
+        )
+    lf, truncated = _prepare_view_frame(
+        path,
+        input_format=input,
+        sql=sql,
+        jmespath_expr=jmespath_expr,
+        limit=limit,
+        skip=skip,
     )
     writer = infer_writer(
         "table-svg" if table_svg else None,
         truncated=truncated,
-        max_cell_len=max_cell_len,
+        max_cell_len=effective_max_cell_len,
     )
     for chunk in writer.write(lf):
         sys.stdout.buffer.write(chunk)
@@ -278,7 +401,7 @@ def schema(
     else:
         reader = infer_reader(path, format=input)
         table_schema = reader.schema(path)
-    console = Console(force_terminal=True)
+    console = Console()
     console.print(table_schema)
 
 
@@ -299,7 +422,7 @@ def summary(
     else:
         handler = infer_reader(path, format=input)
         table_summary = handler.summary(path)
-    console = Console(force_terminal=True)
+    console = Console()
     console.print(table_summary)
 
 
@@ -320,6 +443,9 @@ def convert(
         if output is not None:
             writer = infer_writer(format=output)
         elif input is not None:
+            logger.debug(
+                f"Inferred convert output format '{input.lower()}' from stdin input format"
+            )
             writer = infer_writer(format=input)
         else:
             raise ValueError(
@@ -333,9 +459,15 @@ def convert(
         if output is not None:
             writer = infer_writer(format=output)
         elif input is not None:
+            logger.debug(
+                f"Inferred convert output format '{input.lower()}' from explicit input format override"
+            )
             writer = infer_writer(format=input)
         else:
             writer = reader
+            logger.debug(
+                f"Inferred convert output format '{reader.format.extension()}' from source '{src}'"
+            )
             assert isinstance(writer, TableWriter)
         lf = reader.read(src)
         lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
@@ -351,24 +483,14 @@ def cat(
     jmespath_expr: JmespathOpt = None,
 ) -> None:
     """Concatenate tabular data from multiple files, or just print a single file."""
-    files: list[pl.LazyFrame] = []
-    reader = None
-    for path in paths:
-        if is_stdin(path):
-            files.append(read_stdin(format=input))
-        else:
-            if reader is None:
-                reader = infer_reader(path, format=input)
-            files.append(reader.read(path))
+    files, resolved_format = _resolve_cat_output_format(paths, input)
     lf = pl.concat(files, how="vertical")
     lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
     if output is not None:
         writer = infer_writer(format=output)
-    elif reader is not None:
-        writer = infer_writer(format=reader.format.extension())
-        assert isinstance(writer, TableWriter)
-    elif input is not None:
-        writer = infer_writer(format=input)
+    elif resolved_format is not None:
+        logger.debug(f"Inferred `tab cat` output format '{resolved_format}' from input sources")
+        writer = infer_writer(format=resolved_format)
         assert isinstance(writer, TableWriter)
     else:
         raise ValueError(

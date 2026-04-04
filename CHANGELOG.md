@@ -1,20 +1,34 @@
-  - 0.1.7:
-    - Optional dependency groups are now named `tab-cli[s3|gs|az]`, in accordance with the protocol name.
-  - 0.1.6:
-    - Fixed bug in pyarrow loading of Parquet files.
-    - Added global config file support: settings can be persisted in `~/.config/tab/config.json`. Config file values serve as defaults that CLI flags override.
-  - 0.1.5:
-    - Added stdin support: use `-` as the file path to read from stdin (e.g. `cat data.csv | tab view -i csv -`). Requires `-i`/`--input-format` since format cannot be inferred. Works with `view`, `schema`, `summary`, `convert`, and `cat`.
-    - Added row-wise JMESPath queries via `--jmespath` / `--jp` on `view`, `convert`, and `cat`. Object results become columns; non-object results go into a `value` column. `--sql` and `--jp` are mutually exclusive.
-      - Implemented `--jp` with `LazyFrame.map_batches(...)` so row reshaping stays batch-oriented instead of materializing the full transformed dataset up front.
- - 0.1.4:
-   - Removed `tab sql` subcommand; SQL is now a `--sql` option on `tab view`, `tab convert`, and `tab cat`.
-   - Automatic PyArrow fallback for Parquet files that fail to read with Polars' native reader.
- - 0.1.3:
-   - Separate `tab view` from `tab cat`: `tab view` does not convert formats, `tab cat` does.
-   - Added `--max-cell-len` option to `tab view` to truncate long cell contents.
- - 0.1.2:
-   - Bugfix on reading directories.
- - 0.1.1:
-   - Better credential handling for Azure Blob Storage and Google Cloud Storage.
- - 0.1.0: Initial release
+- 0.1.8:
+  - Improved `tab view` performance for partitioned directories by reading only as many early partitions as needed for an unfiltered preview.
+  - Added glob-pattern support for multi-file inputs such as `s3://.../date=*/*.parquet`.
+  - Speed up Parquet row counting in summaries by reading footer metadata instead of scanning file contents.
+  - Fixed S3 Polars `storage_options` to avoid nested `client_kwargs` values that could break native reads.
+  - Added `default_num_view_rows` config so the default `tab view` preview size can be customized.
+  - Added `log_level` config so the CLI log level can default from `~/.config/tab/config.json` when `--log-level` is omitted.
+  - Added `max_cell_length` config so `tab view` can default to truncating long cell values without passing `--max-cell-len` every time.
+  - Added `num_remote_workers` config to parallelize remote per-partition summary row counting.
+  - Validated config file value types instead of silently accepting invalid JSON types.
+  - Fixed the developer `Makefile` targets to point at `src/tab_cli`.
+  - Tightened multi-file summary validation to reject inconsistent schemas, not just mismatched column counts.
+  - `tab cat` now rejects mixed input formats with a clear error instead of reusing the first reader implicitly.
+  - Cleaned up package metadata and repository hygiene issues including version drift and `uv.lock` ignore rules.
+- 0.1.7:
+  - Optional dependency groups are now named `tab-cli[s3|gs|az]`, in accordance with the protocol name.
+- 0.1.6:
+  - Fixed bug in pyarrow loading of Parquet files.
+  - Added global config file support: settings can be persisted in `~/.config/tab/config.json`. Config file values serve as defaults that CLI flags override.
+- 0.1.5:
+  - Added stdin support: use `-` as the file path to read from stdin (e.g. `cat data.csv | tab view -i csv -`). Requires `-i`/`--input-format` since format cannot be inferred. Works with `view`, `schema`, `summary`, `convert`, and `cat`.
+  - Added row-wise JMESPath queries via `--jmespath` / `--jp` on `view`, `convert`, and `cat`. Object results become columns; non-object results go into a `value` column. `--sql` and `--jp` are mutually exclusive.
+  - Implemented `--jp` with `LazyFrame.map_batches(...)` so row reshaping stays batch-oriented instead of materializing the full transformed dataset up front.
+- 0.1.4:
+  - Removed `tab sql` subcommand; SQL is now a `--sql` option on `tab view`, `tab convert`, and `tab cat`.
+  - Automatic PyArrow fallback for Parquet files that fail to read with Polars' native reader.
+- 0.1.3:
+  - Separate `tab view` from `tab cat`: `tab view` does not convert formats, `tab cat` does.
+  - Added `--max-cell-len` option to `tab view` to truncate long cell contents.
+- 0.1.2:
+  - Bugfix on reading directories.
+- 0.1.1:
+  - Better credential handling for Azure Blob Storage and Google Cloud Storage.
+- 0.1.0: Initial release

@@ -13,13 +13,13 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 
 lint:
-	uv run ruff check tab_cli/
+	uv run ruff check src/tab_cli tests
 
 format:
-	uv run ruff format tab_cli/
+	uv run ruff format src/tab_cli tests
 
 typecheck:
-	uv run ty check tab_cli/
+	uv run ty check src/tab_cli
 
 test:
 	uv run pytest

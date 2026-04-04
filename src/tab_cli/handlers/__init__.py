@@ -3,6 +3,7 @@
 import os
 import sys
 
+from loguru import logger
 import polars as pl
 
 from tab_cli.formats import AvroFormat, CsvFormat, JsonlFormat, ParquetFormat
@@ -10,6 +11,7 @@ from tab_cli.formats.base import FormatHandler
 from tab_cli.handlers.base import FormatWriter, TableReader, TableWriter
 from tab_cli.handlers.cli_table import CliTableFormatter
 from tab_cli.storage import get_backend
+from tab_cli.storage.base import has_glob_pattern
 
 # Format handlers
 _FORMAT_MAP: dict[str, FormatHandler] = {
@@ -36,6 +38,7 @@ def _get_format(format: str | None) -> FormatHandler:
     fmt = _FORMAT_MAP.get(format.lower())
     if fmt is None:
         raise ValueError(f"Unknown format: {format}. Supported: {', '.join(_FORMAT_MAP)}")
+    logger.debug(f"Resolved explicit format '{format.lower()}'")
     return fmt
 
 
@@ -50,6 +53,7 @@ def read_stdin(format: str | None = None) -> pl.LazyFrame:
         A LazyFrame with the data read from stdin.
     """
     fmt = _get_format(format)
+    logger.debug(f"Reading stdin using explicit format '{fmt.extension()}'")
     return fmt.read_stream(sys.stdin.buffer).lazy()
 
 
@@ -86,25 +90,35 @@ def infer_reader(path: str, format: str | None = None) -> TableReader:
         fmt = _FORMAT_MAP.get(format.lower())
         if fmt is None:
             raise ValueError(f"Unknown format: {format}. Supported: {', '.join(_FORMAT_MAP)}")
+        logger.debug(
+            f"Using explicit input format '{format.lower()}' for '{path}' "
+            f"with backend {type(backend).__name__}"
+        )
         return TableReader(backend, fmt)
 
     # Infer format from path
-    if backend.is_directory(path):
+    extension = _get_extension(path)
+    source = path
+    if backend.is_directory(path) or (has_glob_pattern(path) and not extension):
         # Get extension from first data file in directory (skip metadata files)
         for file_info in backend.list_files(path, ""):
             if not _is_data_file(file_info.url):
                 continue
             extension = _get_extension(file_info.url)
             if extension:
+                source = file_info.url
                 break
         else:
-            raise ValueError(f"No data files found in directory: {path}")
-    else:
-        extension = _get_extension(path)
+            raise ValueError(f"No data files found in input: {path}")
 
     fmt = _FORMAT_MAP.get(extension)
     if fmt is None:
         raise ValueError(f"Unknown extension: {extension}. Supported: {', '.join(_FORMAT_MAP)}")
+
+    logger.debug(
+        f"Inferred input format '{extension}' for '{path}' from '{source}' "
+        f"using backend {type(backend).__name__}"
+    )
 
     return TableReader(backend, fmt)
 
@@ -121,12 +135,22 @@ def infer_writer(format: str | None = None, truncated: bool = False, max_cell_le
         TableWriter for the format.
     """
     if format is None:
+        logger.debug(
+            f"Defaulting to CLI table writer (truncated={truncated}, "
+            f"max_cell_len={max_cell_len})"
+        )
         return CliTableFormatter(truncated=truncated, max_cell_len=max_cell_len)
     if format == "table-svg":
+        logger.debug(
+            f"Using SVG table writer (truncated={truncated}, "
+            f"max_cell_len={max_cell_len})"
+        )
         return CliTableFormatter(truncated=truncated, svg_capture=True, max_cell_len=max_cell_len)
 
     fmt = _FORMAT_MAP.get(format.lower())
     if fmt is None:
         raise ValueError(f"Unknown format: {format}. Supported: {', '.join(_FORMAT_MAP)}")
+
+    logger.debug(f"Resolved writer for explicit output format '{format.lower()}'")
 
     return FormatWriter(fmt)

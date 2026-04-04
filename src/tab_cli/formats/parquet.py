@@ -2,10 +2,12 @@
 
 from collections.abc import Iterable
 from io import BytesIO
-from typing import BinaryIO
+from typing import BinaryIO, Callable
 
 from loguru import logger
 import polars as pl
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 from tab_cli.formats.base import FormatHandler
 
@@ -27,8 +29,7 @@ def _scan_parquet_with_pyarrow_fallback(
         return lf
     except Exception as e:
         logger.warning(
-            "Polars native Parquet reader failed ({}), retrying with PyArrow backend",
-            e,
+            f"Polars native Parquet reader failed ({e}), retrying with PyArrow backend"
         )
         return pl.read_parquet(url, storage_options=storage_options, use_pyarrow=True).lazy()
 
@@ -51,12 +52,20 @@ class ParquetFormat(FormatHandler):
     def collect_schema(self, url: str, storage_options: dict[str, str] | None = None) -> list[tuple[str, pl.DataType]]:
         return list(_scan_parquet_with_pyarrow_fallback(url, storage_options=storage_options).collect_schema().items())
 
-    def count_rows(self, url: str, storage_options: dict[str, str] | None = None) -> int:
-        return _scan_parquet_with_pyarrow_fallback(url, storage_options=storage_options).select(pl.len()).collect().item()
+    def count_rows(
+        self,
+        url: str,
+        storage_options: dict[str, str] | None = None,
+        opener: Callable[[str], BinaryIO] | None = None,
+    ) -> int:
+        if opener is not None:
+            with opener(url) as stream:
+                return pq.ParquetFile(pa.PythonFile(stream, mode="r")).metadata.num_rows
+        with open(url, "rb") as stream:
+            return pq.ParquetFile(pa.PythonFile(stream, mode="r")).metadata.num_rows
 
     def extra_summary(self, url: str) -> dict[str, str | int | float] | None:
-        # TODO: Parquet metadata
-        pass
+        return None
 
     def write(self, lf: pl.LazyFrame) -> Iterable[bytes]:
         output = BytesIO()

@@ -43,7 +43,7 @@ Use it as the default operating guide when changing code in this repo.
 - The CLI tests rely on `typer.testing.CliRunner`.
 - Test data is stored under `tests/assets`.
 - Existing tests emphasize user-visible CLI output, not internal implementation details.
-- When adding CLI behavior, extend `tests/test_cli.py` unless the change clearly deserves a new file.
+- The CLI tests are split across focused files under `tests/`; extend the nearest existing file unless a new one is clearly warranted.
 - Assert both `exit_code` and key output fragments.
 - For stdin support, pass `"-"` as the path and provide `input=` to `runner.invoke(...)`.
 
@@ -89,6 +89,9 @@ Use it as the default operating guide when changing code in this repo.
 
 ## Types
 
+- NEVER implicitly cast any variable to bool with `if var:` or `if not var:` unless the variable is already a bool. Do NOT rely on truthiness for control flow:
+  for example, testing if a list is empty with `if not my_list:` is not allowed. Instead, use explicit length checks like `if len(my_list) > 0:`.
+  always write `if x is not None:` or `if x is None:` when checking for `None` values.
 - Type hints are used widely and should be preserved.
 - Prefer modern built-in generics like `list[str]` and `dict[str, Any]`.
 - Use `X | None` instead of `Optional[X]` in new code unless matching nearby style requires otherwise.
@@ -118,6 +121,7 @@ Use it as the default operating guide when changing code in this repo.
 ## Logging And Output
 
 - The CLI configures Loguru with `RichHandler` in the Typer callback.
+- When writing Loguru messages, use f-strings instead of Loguru brace-style formatting.
 - User-facing table and summary output is rendered with Rich.
 - Streaming command output usually writes bytes to `sys.stdout.buffer`.
 - Keep stderr/stdout behavior consistent with the existing command design.

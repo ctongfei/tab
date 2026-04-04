@@ -17,7 +17,7 @@ Options:
 | `--jmespath` / `--jp`   | JMESPath expression to apply to each row as JSON. Object outputs become columns; non-object outputs go to a `value` column. The result shape must stay consistent across rows. |
 | `--limit`               | Maximum number of rows to display.                                                                        |
 | `--skip`                | Number of rows to skip from the beginning.                                                                |
-| `--max-cell-len`        | Truncate cell contents longer than this.                                                                 |
+| `--max-cell-len`        | Truncate cell contents longer than this. If omitted, `max_cell_length` from config is used when set.    |
 
 ## `tab schema`
 
@@ -91,4 +91,4 @@ Options:
 | Option                  | Description                                                                                                                  |
 |-------------------------|------------------------------------------------------------------------------------------------------------------------------|
 | `--az-url-authority-is-account` | Interpret az:// URL authority as storage account name instead of container name. See [azure.md](Azure) for more information. |
-| `--log-level`               | Log level from `{DEBUG, INFO, WARNING, ERROR, CRITICAL}`.                                                                     |
+| `--log-level`               | Log level from `{DEBUG, INFO, WARNING, ERROR, CRITICAL}`. If omitted, uses `log_level` from config.                         |

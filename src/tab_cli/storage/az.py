@@ -1,5 +1,7 @@
+import importlib
 import os
 from enum import Enum
+from typing import Any, cast
 
 from loguru import logger
 
@@ -36,7 +38,7 @@ class AzBackend(CloudFsspecBackend):
                 storage account name. If False, interpret it as the container name.
         """
         try:
-            import adlfs
+            adlfs = importlib.import_module("adlfs")
         except ImportError as e:
             raise ImportError("Package 'adlfs' is required for az:// URLs. Install with: pip install adlfs") from e
 
@@ -56,14 +58,14 @@ class AzBackend(CloudFsspecBackend):
 
         # 1. Try connection string from environment
         if connection_string:
-            logger.debug("Authenticating to Azure storage account '{}' using connection string", account)
+            logger.debug(f"Authenticating to Azure storage account '{account}' using connection string")
             self.fs = self.adlfs.AzureBlobFileSystem(connection_string=connection_string)
             self.connection_string = connection_string
             self.method = AzAuthMethod.CONNECTION_STRING
 
         # 2. Try account key from environment
         elif account_key:
-            logger.debug("Authenticating to Azure storage account '{}' using account key", account)
+            logger.debug(f"Authenticating to Azure storage account '{account}' using account key")
             self.fs = self.adlfs.AzureBlobFileSystem(
                 account_name=account,
                 account_key=account_key,
@@ -73,7 +75,7 @@ class AzBackend(CloudFsspecBackend):
 
         # 3. Try SAS token from environment
         elif sas_token:
-            logger.debug("Authenticating to Azure storage account '{}' using SAS token", account)
+            logger.debug(f"Authenticating to Azure storage account '{account}' using SAS token")
             self.fs = self.adlfs.AzureBlobFileSystem(
                 account_name=account,
                 sas_token=sas_token,
@@ -84,12 +86,13 @@ class AzBackend(CloudFsspecBackend):
         else:
             # 4. Try Azure AD / RBAC (DefaultAzureCredential)
             try:
-                from azure.identity.aio import DefaultAzureCredential  # Async version,
+                azure_identity = importlib.import_module("azure.identity.aio")
+                default_credential = azure_identity.DefaultAzureCredential
 
-                logger.debug("Authenticating to Azure storage account '{}' using Azure AD / RBAC", account)
+                logger.debug(f"Authenticating to Azure storage account '{account}' using Azure AD / RBAC")
                 self.fs = self.adlfs.AzureBlobFileSystem(
                     account_name=account,
-                    credential=DefaultAzureCredential(),
+                    credential=cast(Any, default_credential()),
                 )
                 self.fs.ls(container)
                 self.method = AzAuthMethod.AZURE_AD
@@ -158,7 +161,7 @@ class AzBackend(CloudFsspecBackend):
         parsed = parse_url(url)
         return f"az://{parsed.bucket}/{parsed.path}"
 
-    def storage_options(self, url: str) -> dict[str, str] | None:
+    def storage_options(self, url: str) -> dict[str, Any] | None:
         """Return storage options for Polars Azure access.
 
         Returns:

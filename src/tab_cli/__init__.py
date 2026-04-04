@@ -1,3 +1,3 @@
 """Tab CLI - A CLI tool for tabular data."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.7"

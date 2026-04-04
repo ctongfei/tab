@@ -11,6 +11,10 @@ class FileInfo:
     size: int
 
 
+def has_glob_pattern(url: str) -> bool:
+    return any(char in url for char in "*?[{")
+
+
 class StorageBackend(ABC):
 
     @abstractmethod
