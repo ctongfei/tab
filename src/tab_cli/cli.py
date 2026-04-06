@@ -80,6 +80,28 @@ app = typer.Typer(
 )
 
 DEFAULT_VIEW_TRUNCATION_PROBE_ROWS = 1
+VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+
+
+def _normalize_log_level(log_level: str) -> str:
+    normalized = log_level.upper()
+    if normalized not in VALID_LOG_LEVELS:
+        valid_levels = ", ".join(sorted(VALID_LOG_LEVELS))
+        raise typer.BadParameter(f"Invalid log level '{log_level}'. Expected one of: {valid_levels}")
+    return normalized
+
+
+def _configure_logger(level: str) -> None:
+    logger.remove()
+    logger.add(
+        RichHandler(
+            rich_tracebacks=True,
+            tracebacks_show_locals=True,
+            markup=True,
+        ),
+        format="{message}",
+        level=level,
+    )
 
 
 @app.callback()
@@ -100,23 +122,20 @@ def main_callback(
     ] = None,
 ) -> None:
     """Global options for tab_cli CLI."""
-    load_config_file()
-    effective_log_level = (
-        log_level.upper() if log_level is not None else config.config.log_level.upper()
+    loaded_config = load_config_file()
+    effective_config = loaded_config
+
+    effective_config.log_level = (
+        _normalize_log_level(log_level)
+        if log_level is not None
+        else _normalize_log_level(effective_config.log_level)
     )
-    logger.remove()
-    logger.add(
-        RichHandler(
-            rich_tracebacks=True,
-            tracebacks_show_locals=True,
-            markup=True,
-        ),
-        format="{message}",
-        level=effective_log_level,
-    )
-    # CLI flags override config file values
+
     if az_url_authority_is_account:
-        config.config.az_url_authority_is_account = az_url_authority_is_account
+        effective_config.az_url_authority_is_account = az_url_authority_is_account
+
+    config.config = effective_config
+    _configure_logger(config.config.log_level)
 
 
 def _apply_sql(lf: pl.LazyFrame, sql: str | None) -> pl.LazyFrame:

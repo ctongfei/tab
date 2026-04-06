@@ -37,15 +37,16 @@ def _matches_type(value: Any, expected_type: Any) -> bool:
     return type(value) is expected_type
 
 
-def load_config_file(path: Path = CONFIG_FILE) -> None:
-    """Load settings from a JSON config file into the global config.
+def load_config_file(path: Path = CONFIG_FILE) -> Config:
+    """Load settings from a JSON config file into a fresh Config object.
 
     Unknown keys are logged and ignored. Type mismatches raise ValueError.
-    If the file does not exist, this is a no-op.
+    If the file does not exist, return built-in defaults.
     """
+    loaded_config = Config()
     if not path.is_file():
         logger.debug(f"No config file found at {path}; using built-in defaults")
-        return
+        return loaded_config
 
     text = path.read_text(encoding="utf-8")
     data = json.loads(text)
@@ -65,5 +66,6 @@ def load_config_file(path: Path = CONFIG_FILE) -> None:
             raise ValueError(
                 f"Config key '{key}' must be of type {expected_name}, got {type(value).__name__}"
             )
-        setattr(config, key, value)
+        setattr(loaded_config, key, value)
     logger.debug(f"Loaded config from {path}")
+    return loaded_config

@@ -13,13 +13,13 @@ class TestConfigFile:
         config_module.config = Config()
 
     def test_load_missing_file(self, tmp_path):
-        load_config_file(tmp_path / "nonexistent.json")
-        assert config_module.config.az_url_authority_is_account is False
-        assert config_module.config.default_num_view_rows == 20
-        assert config_module.config.log_level == "INFO"
-        assert config_module.config.max_cell_length is None
-        assert config_module.config.num_remote_workers == 8
-        assert config_module.config.sampling_size_for_schema_inference == 32
+        loaded = load_config_file(tmp_path / "nonexistent.json")
+        assert loaded.az_url_authority_is_account is False
+        assert loaded.default_num_view_rows == 20
+        assert loaded.log_level == "INFO"
+        assert loaded.max_cell_length is None
+        assert loaded.num_remote_workers == 8
+        assert loaded.sampling_size_for_schema_inference == 32
 
     def test_load_valid_config(self, tmp_path):
         cfg = tmp_path / "config.json"
@@ -35,13 +35,13 @@ class TestConfigFile:
                 }
             )
         )
-        load_config_file(cfg)
-        assert config_module.config.az_url_authority_is_account is True
-        assert config_module.config.default_num_view_rows == 10
-        assert config_module.config.log_level == "DEBUG"
-        assert config_module.config.max_cell_length == 12
-        assert config_module.config.num_remote_workers == 2
-        assert config_module.config.sampling_size_for_schema_inference == 64
+        loaded = load_config_file(cfg)
+        assert loaded.az_url_authority_is_account is True
+        assert loaded.default_num_view_rows == 10
+        assert loaded.log_level == "DEBUG"
+        assert loaded.max_cell_length == 12
+        assert loaded.num_remote_workers == 2
+        assert loaded.sampling_size_for_schema_inference == 64
 
     def test_load_partial_config(self, tmp_path):
         cfg = tmp_path / "config.json"
@@ -53,13 +53,13 @@ class TestConfigFile:
                 }
             )
         )
-        load_config_file(cfg)
-        assert config_module.config.az_url_authority_is_account is False
-        assert config_module.config.default_num_view_rows == 20
-        assert config_module.config.log_level == "INFO"
-        assert config_module.config.max_cell_length is None
-        assert config_module.config.num_remote_workers == 8
-        assert config_module.config.sampling_size_for_schema_inference == 128
+        loaded = load_config_file(cfg)
+        assert loaded.az_url_authority_is_account is False
+        assert loaded.default_num_view_rows == 20
+        assert loaded.log_level == "INFO"
+        assert loaded.max_cell_length is None
+        assert loaded.num_remote_workers == 8
+        assert loaded.sampling_size_for_schema_inference == 128
 
     def test_unknown_keys_ignored(self, tmp_path):
         cfg = tmp_path / "config.json"
@@ -68,9 +68,9 @@ class TestConfigFile:
                 {"unknown_key": "value", "sampling_size_for_schema_inference": 16}
             )
         )
-        load_config_file(cfg)
-        assert config_module.config.sampling_size_for_schema_inference == 16
-        assert not hasattr(config_module.config, "unknown_key")
+        loaded = load_config_file(cfg)
+        assert loaded.sampling_size_for_schema_inference == 16
+        assert not hasattr(loaded, "unknown_key")
 
     def test_invalid_json_raises(self, tmp_path):
         cfg = tmp_path / "config.json"
@@ -90,6 +90,26 @@ class TestConfigFile:
             assert False, "Expected ValueError"
         except ValueError as exc:
             assert "num_remote_workers" in str(exc)
+
+    def test_invalid_log_level_in_config_is_rejected_by_cli(self, tmp_path):
+        cfg = tmp_path / "config.json"
+        cfg.write_text(json.dumps({"log_level": "NOPE"}))
+
+        with patch(
+            "tab_cli.cli.load_config_file", side_effect=lambda: load_config_file(cfg)
+        ):
+            result = runner.invoke(app, ["view", TEST_CSV])
+
+        assert result.exit_code != 0
+        assert "Invalid value" in result.output
+        assert "Invalid log level 'NOPE'" in result.output
+
+    def test_invalid_cli_log_level_has_friendly_error(self):
+        result = runner.invoke(app, ["--log-level", "NOPE", "view", TEST_CSV])
+
+        assert result.exit_code != 0
+        assert "Invalid value" in result.output
+        assert "Invalid log level 'NOPE'" in result.output
 
     def test_view_uses_default_max_cell_length_from_config(self, tmp_path):
         cfg = tmp_path / "config.json"
@@ -179,5 +199,5 @@ class TestConfigFile:
     def test_config_file_sets_num_remote_workers(self, tmp_path):
         cfg = tmp_path / "config.json"
         cfg.write_text(json.dumps({"num_remote_workers": 3}))
-        load_config_file(cfg)
-        assert config_module.config.num_remote_workers == 3
+        loaded = load_config_file(cfg)
+        assert loaded.num_remote_workers == 3
