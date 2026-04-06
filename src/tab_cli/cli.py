@@ -62,9 +62,9 @@ LimitOpt: TypeAlias = Annotated[
 SkipOpt: TypeAlias = Annotated[
     int, typer.Option("--skip", help="Number of rows to skip")
 ]
-MaxCellLenOpt: TypeAlias = Annotated[
+MaxCellLengthOpt: TypeAlias = Annotated[
     Optional[int],
-    typer.Option("--max-cell-len", help="Truncate cell contents longer than this"),
+    typer.Option("--max-cell-length", help="Truncate cell contents longer than this"),
 ]
 TableSvgOpt: TypeAlias = Annotated[
     bool, typer.Option("--table-svg", help="Output table as SVG")
@@ -183,8 +183,7 @@ def _apply_jmespath(lf: pl.LazyFrame, expression: str) -> pl.LazyFrame:
     compiled = jmespath.compile(expression)
     sample_df = lf.slice(0, Config.sampling_size_for_schema_inference).collect()
     logger.debug(
-        "Inferring JMESPath output schema from "
-        f"{Config.sampling_size_for_schema_inference} sampled row(s)"
+        f"Inferring JMESPath output schema from {Config.sampling_size_for_schema_inference} sampled row(s)"
     )
     if sample_df.is_empty():
         logger.debug("JMESPath schema inference sample was empty; returning empty LazyFrame")
@@ -352,6 +351,23 @@ def _resolve_cat_output_format(
     return files, resolved_format
 
 
+def _requires_explicit_output_for_database_input(
+    paths: list[str],
+    input_format: str | None,
+) -> str | None:
+    if input_format is not None and input_format.lower() in {"sqlite", "duckdb"}:
+        return input_format.lower()
+
+    for path in paths:
+        lowered_path = path.rsplit("#", 1)[0].lower()
+        if lowered_path.endswith((".db", ".sqlite", ".sqlite3")):
+            return "sqlite"
+        if lowered_path.endswith((".duckdb", ".ddb")):
+            return "duckdb"
+
+    return None
+
+
 @app.command()
 def view(
     path: PathArg,
@@ -360,7 +376,7 @@ def view(
     input: InputOpt = None,
     sql: SqlOpt = None,
     jmespath_expr: JmespathOpt = None,
-    max_cell_len: MaxCellLenOpt = None,
+    max_cell_len: MaxCellLengthOpt = None,
     table_svg: TableSvgOpt = False,
 ) -> None:
     """View tabular data as a formatted table."""
@@ -483,11 +499,22 @@ def cat(
     jmespath_expr: JmespathOpt = None,
 ) -> None:
     """Concatenate tabular data from multiple files, or just print a single file."""
+    if output is None:
+        database_format = _requires_explicit_output_for_database_input(paths, input)
+        if database_format is not None:
+            raise ValueError(
+                f"Output format (-o/--output-format) is required when reading from {database_format.capitalize()} input"
+            )
+
     files, resolved_format = _resolve_cat_output_format(paths, input)
     lf = pl.concat(files, how="vertical")
     lf = _apply_query(lf, sql=sql, jmespath_expr=jmespath_expr)
     if output is not None:
         writer = infer_writer(format=output)
+    elif resolved_format in {"sqlite", "duckdb"}:
+        raise ValueError(
+            f"Output format (-o/--output-format) is required when reading from {resolved_format.capitalize()} input"
+        )
     elif resolved_format is not None:
         logger.debug(f"Inferred `tab cat` output format '{resolved_format}' from input sources")
         writer = infer_writer(format=resolved_format)

@@ -3,7 +3,7 @@
 [![pypi](https://img.shields.io/pypi/v/tab-cli)](https://pypi.org/project/tab-cli/)
 
 A CLI tool for viewing, querying, and converting tabular data files.
-Reads CSV, TSV, JSON Lines, Parquet, and Avro -- locally or from S3, GCS, and Azure Blob Storage.
+Reads CSV, TSV, JSON Lines, Parquet, Avro, SQLite tables, and DuckDB tables -- locally or from S3, GCS, and Azure Blob Storage.
 
 ```sh
 pip install tab-cli
@@ -25,6 +25,11 @@ tab view data.csv
   <img src="https://raw.githubusercontent.com/ctongfei/tab/refs/heads/gh-pages/assets/test.svg" alt="tab view" width="680">
 </p>
 
+### Can be remote, with many partitions that is globbed together:
+
+```bash
+tab view 's3://aws-public-blockchain/v1.0/btc/blocks/date=2026-01-*/*'
+````
 ### Query with SQL
 
 The table is always available as `t`:
@@ -78,12 +83,40 @@ tab view gs://bucket/path/data.csv
 tab view az://container/path/data.jsonl
 ```
 
+Globbing is supported for local and cloud paths:
+
+```bash
+tab view 'data/date=*/*.parquet'
+tab view 's3://bucket/path/date=2026-01-*/*'
+```
+
+### Read a SQLite table
+
+Use `{url}#{table_name}` for SQLite inputs:
+
+```bash
+tab view data.db#users
+tab view s3://bucket/path/data.db#users
+```
+
+### Read a DuckDB table
+
+Use `{url}#{table_name}` for DuckDB inputs:
+
+```bash
+tab view data.duckdb#users
+tab view s3://bucket/path/data.duckdb#users
+```
+
 Install cloud extras as needed:
 
 ```sh
 pip install 'tab-cli[s3]'    # AWS S3
 pip install 'tab-cli[gs]'    # Google Cloud Storage
 pip install 'tab-cli[az]'    # Azure Blob Storage
+pip install 'tab-cli[duckdb]'  # DuckDB input support
+pip install 'tab-cli[sqlite]'  # SQLite via Polars ADBC
+pip install 'tab-cli[all]'   # Install all optional integrations
 ```
 
 ## Supported formats
@@ -92,3 +125,5 @@ pip install 'tab-cli[az]'    # Azure Blob Storage
  - jsonl
  - parquet
  - avro
+ - duckdb (input only; use `{url}#{table_name}`)
+ - sqlite (input only; use `{url}#{table_name}`)

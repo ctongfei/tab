@@ -43,13 +43,23 @@ class ParquetFormat(FormatHandler):
     def supports_glob(self) -> bool:
         return True
 
-    def scan(self, url: str, storage_options: dict[str, str] | None = None) -> pl.LazyFrame:
+    def scan(
+        self,
+        url: str,
+        storage_options: dict[str, str] | None = None,
+        opener: Callable[[str], BinaryIO] | None = None,
+    ) -> pl.LazyFrame:
         return _scan_parquet_with_pyarrow_fallback(url, storage_options=storage_options)
 
     def read_stream(self, stream: BinaryIO) -> pl.DataFrame:
         return pl.read_parquet(stream)
 
-    def collect_schema(self, url: str, storage_options: dict[str, str] | None = None) -> list[tuple[str, pl.DataType]]:
+    def collect_schema(
+        self,
+        url: str,
+        storage_options: dict[str, str] | None = None,
+        opener: Callable[[str], BinaryIO] | None = None,
+    ) -> list[tuple[str, pl.DataType]]:
         return list(_scan_parquet_with_pyarrow_fallback(url, storage_options=storage_options).collect_schema().items())
 
     def count_rows(

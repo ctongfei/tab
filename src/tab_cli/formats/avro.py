@@ -20,7 +20,12 @@ class AvroFormat(FormatHandler):
         # polars_fastavro doesn't support glob patterns
         return False
 
-    def scan(self, url: str, storage_options: dict[str, str] | None = None) -> pl.LazyFrame:
+    def scan(
+        self,
+        url: str,
+        storage_options: dict[str, str] | None = None,
+        opener: Callable[[str], BinaryIO] | None = None,
+    ) -> pl.LazyFrame:
         # polars_fastavro doesn't support storage_options, so cloud URIs
         # need to be accessed through fsspec first
         return polars_fastavro.scan_avro(url)
@@ -28,7 +33,12 @@ class AvroFormat(FormatHandler):
     def read_stream(self, stream: BinaryIO) -> pl.DataFrame:
         return polars_fastavro.read_avro(stream)
 
-    def collect_schema(self, url: str, storage_options: dict[str, str] | None = None) -> list[tuple[str, pl.DataType]]:
+    def collect_schema(
+        self,
+        url: str,
+        storage_options: dict[str, str] | None = None,
+        opener: Callable[[str], BinaryIO] | None = None,
+    ) -> list[tuple[str, pl.DataType]]:
         # polars_fastavro doesn't support storage_options
         return list(polars_fastavro.scan_avro(url).collect_schema().items())
 

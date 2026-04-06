@@ -6,7 +6,7 @@ import sys
 from loguru import logger
 import polars as pl
 
-from tab_cli.formats import AvroFormat, CsvFormat, JsonlFormat, ParquetFormat
+from tab_cli.formats import AvroFormat, CsvFormat, DuckdbFormat, JsonlFormat, ParquetFormat, SqliteFormat
 from tab_cli.formats.base import FormatHandler
 from tab_cli.handlers.base import FormatWriter, TableReader, TableWriter
 from tab_cli.handlers.cli_table import CliTableFormatter
@@ -20,6 +20,21 @@ _FORMAT_MAP: dict[str, FormatHandler] = {
     "parquet": ParquetFormat(),
     "jsonl": JsonlFormat(),
     "avro": AvroFormat(),
+    "duckdb": DuckdbFormat(),
+    "sqlite": SqliteFormat(),
+}
+
+_EXTENSION_TO_FORMAT_NAME: dict[str, str] = {
+    "csv": "csv",
+    "tsv": "tsv",
+    "parquet": "parquet",
+    "jsonl": "jsonl",
+    "avro": "avro",
+    "duckdb": "duckdb",
+    "ddb": "duckdb",
+    "db": "sqlite",
+    "sqlite": "sqlite",
+    "sqlite3": "sqlite",
 }
 
 
@@ -59,6 +74,7 @@ def read_stdin(format: str | None = None) -> pl.LazyFrame:
 
 def _get_extension(path: str) -> str:
     """Extract file extension from a path or URL."""
+    path = path.rsplit("#", 1)[0]
     # Handle URIs by getting the path component
     if "://" in path:
         path = path.split("://", 1)[1]
@@ -111,7 +127,8 @@ def infer_reader(path: str, format: str | None = None) -> TableReader:
         else:
             raise ValueError(f"No data files found in input: {path}")
 
-    fmt = _FORMAT_MAP.get(extension)
+    format_name = _EXTENSION_TO_FORMAT_NAME.get(extension)
+    fmt = _FORMAT_MAP.get(format_name) if format_name is not None else None
     if fmt is None:
         raise ValueError(f"Unknown extension: {extension}. Supported: {', '.join(_FORMAT_MAP)}")
 
@@ -146,6 +163,11 @@ def infer_writer(format: str | None = None, truncated: bool = False, max_cell_le
             f"max_cell_len={max_cell_len})"
         )
         return CliTableFormatter(truncated=truncated, svg_capture=True, max_cell_len=max_cell_len)
+
+    if format.lower() in {"sqlite", "duckdb"}:
+        raise ValueError(
+            f"{format.lower()} output is not supported; choose an explicit output format such as csv, jsonl, or parquet"
+        )
 
     fmt = _FORMAT_MAP.get(format.lower())
     if fmt is None:

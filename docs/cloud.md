@@ -9,6 +9,20 @@ tab view az://$container/$path
 tab view abfss://$container@$account.dfs.core.windows.net/$path
 ```
 
+Cloud paths may also use glob patterns:
+
+```bash
+tab view 's3://$bucket/path/date=*/*.parquet'
+tab view 'gs://$bucket/path/date=2026-01-*/*'
+tab summary 'az://$container/path/date=*/*.jsonl'
+```
+
+Install all optional integrations with:
+
+```bash
+pip install 'tab-cli[all]'
+```
+
 
 ## AWS S3
 

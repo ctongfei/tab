@@ -23,8 +23,29 @@ class FormatHandler(ABC):
         """
         return False
 
+    def supports_multi_file(self) -> bool:
+        """Whether this format can read from directories or globs."""
+        return True
+
+    def source_url(self, url: str) -> str:
+        """Return the storage URL used for backend operations."""
+        return url
+
+    def uses_normalized_url(self) -> bool:
+        """Whether backend.normalize_for_polars should be applied before scan/schema."""
+        return True
+
+    def needs_opener(self) -> bool:
+        """Whether this format needs backend.open for scan/schema/count operations."""
+        return False
+
     @abstractmethod
-    def scan(self, url: str, storage_options: dict[str, str] | None = None) -> pl.LazyFrame:
+    def scan(
+        self,
+        url: str,
+        storage_options: dict[str, str] | None = None,
+        opener: Callable[[str], BinaryIO] | None = None,
+    ) -> pl.LazyFrame:
         """Scan from a URL (local path or cloud URL).
 
         Args:
@@ -39,7 +60,12 @@ class FormatHandler(ABC):
         pass
 
     @abstractmethod
-    def collect_schema(self, url: str, storage_options: dict[str, str] | None = None) -> list[tuple[str, pl.DataType]]:
+    def collect_schema(
+        self,
+        url: str,
+        storage_options: dict[str, str] | None = None,
+        opener: Callable[[str], BinaryIO] | None = None,
+    ) -> list[tuple[str, pl.DataType]]:
         """Get schema as list of (name, dtype) tuples."""
         pass
 

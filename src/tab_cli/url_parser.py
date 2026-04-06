@@ -52,7 +52,7 @@ def parse_url(url: str) -> ParsedUrl:
         if scheme == "file":
             path = parsed.path
         else:
-            path = url
+            path = parsed.path
         return ParsedUrl(scheme="file", bucket=None, account=None, path=path, original=url)
 
     # S3/GCS: s3://bucket/path

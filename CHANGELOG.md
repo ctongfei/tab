@@ -1,3 +1,10 @@
+- 0.2.0:
+  - Added read-only SQLite/DuckDB input support via `{url}#{table_name}`, including remote SQLite/DuckDB files that are materialized locally before querying with Polars.
+  - Added `tab-cli[all]` to install all optional integrations.
+  - Renamed the `tab view` CLI flag from `--max-cell-len` to `--max-cell-length` to match the `max_cell_length` config key.
+  - Optimized cloud partition-glob expansion for fsspec-backed object stores so common patterns like `date=2026-01-*/*` avoid very slow `glob(...)` calls.
+- 0.1.9:
+  - Fixed `tab view` to render cell contents verbatim instead of interpreting bracketed text like `[red]...[/red]` as Rich markup.
 - 0.1.8:
   - Improved `tab view` performance for partitioned directories by reading only as many early partitions as needed for an unfiltered preview.
   - Added glob-pattern support for multi-file inputs such as `s3://.../date=*/*.parquet`.
@@ -5,7 +12,7 @@
   - Fixed S3 Polars `storage_options` to avoid nested `client_kwargs` values that could break native reads.
   - Added `default_num_view_rows` config so the default `tab view` preview size can be customized.
   - Added `log_level` config so the CLI log level can default from `~/.config/tab/config.json` when `--log-level` is omitted.
-  - Added `max_cell_length` config so `tab view` can default to truncating long cell values without passing `--max-cell-len` every time.
+  - Added `max_cell_length` config so `tab view` can default to truncating long cell values without passing `--max-cell-length` every time.
   - Added `num_remote_workers` config to parallelize remote per-partition summary row counting.
   - Validated config file value types instead of silently accepting invalid JSON types.
   - Fixed the developer `Makefile` targets to point at `src/tab_cli`.
@@ -26,7 +33,7 @@
   - Automatic PyArrow fallback for Parquet files that fail to read with Polars' native reader.
 - 0.1.3:
   - Separate `tab view` from `tab cat`: `tab view` does not convert formats, `tab cat` does.
-  - Added `--max-cell-len` option to `tab view` to truncate long cell contents.
+  - Added `--max-cell-length` option to `tab view` to truncate long cell contents.
 - 0.1.2:
   - Bugfix on reading directories.
 - 0.1.1:

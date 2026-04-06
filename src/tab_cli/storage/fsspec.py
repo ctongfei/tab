@@ -10,6 +10,7 @@ Note: The following have dedicated backends:
 The appropriate protocol handler package must be installed separately.
 """
 
+from fnmatch import fnmatchcase
 from typing import BinaryIO, Iterator, Any
 import fsspec
 from loguru import logger
@@ -115,3 +116,68 @@ class CloudFsspecBackend(FsspecBackend):
     def _to_uri(self, internal_path: str) -> str:
         """Convert internal path back to URL. Subclasses must implement."""
         return f"{self.protocol}://{internal_path}"
+
+    def list_files(self, url: str, extension: str) -> Iterator[FileInfo]:
+        internal_path = self._to_internal(url)
+        if has_glob_pattern(url) is False:
+            yield from super().list_files(url, extension)
+            return
+
+        if "**" in internal_path or "{" in internal_path:
+            logger.debug(f"Falling back to fsspec glob for complex cloud pattern: {url}")
+            yield from super().list_files(url, extension)
+            return
+
+        logger.debug(f"Expanding cloud glob by path segments: {url}")
+        for path in self._iter_glob_paths_by_segments(internal_path):
+            if extension and not path.endswith(f".{extension}"):
+                continue
+            info = self._require_fs().info(path)
+            if info.get("type") == "directory":
+                continue
+            yield FileInfo(url=self._to_uri(path), size=info["size"])
+
+    def _iter_glob_paths_by_segments(self, pattern: str) -> Iterator[str]:
+        segments = [segment for segment in pattern.split("/") if len(segment) > 0]
+        if len(segments) == 0:
+            return
+
+        fixed_segments: list[str] = []
+        index = 0
+        while index < len(segments) and has_glob_pattern(segments[index]) is False:
+            fixed_segments.append(segments[index])
+            index += 1
+
+        if index == len(segments):
+            yield pattern
+            return
+
+        if len(fixed_segments) == 0:
+            logger.debug(f"Falling back to fsspec glob for bucket-level pattern: {pattern}")
+            for path in self._require_fs().glob(pattern):
+                yield path
+            return
+
+        base_prefix = "/".join(fixed_segments)
+        yield from self._iter_glob_segment_matches(base_prefix, segments[index:])
+
+    def _iter_glob_segment_matches(self, prefix: str, segments: list[str]) -> Iterator[str]:
+        if len(segments) == 0:
+            yield prefix
+            return
+
+        segment = segments[0]
+        remaining_segments = segments[1:]
+        try:
+            children = sorted(self._require_fs().ls(prefix, detail=False))
+        except FileNotFoundError:
+            return
+
+        for child in children:
+            name = child.rstrip("/").split("/")[-1]
+            if fnmatchcase(name, segment) is False:
+                continue
+            if len(remaining_segments) == 0:
+                yield child
+            else:
+                yield from self._iter_glob_segment_matches(child, remaining_segments)

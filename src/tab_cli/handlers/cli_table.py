@@ -1,9 +1,10 @@
 import sys
 from collections.abc import Iterable
 
-from rich.table import Table
 from rich import box
 from rich.console import Console
+from rich.markup import escape
+from rich.table import Table
 import polars as pl
 
 from tab_cli.handlers.base import TableWriter
@@ -38,7 +39,12 @@ class CliTableFormatter(TableWriter):
 
         for batch in lf.collect_batches():
             for row in batch.iter_rows():
-                table.add_row(*[self._truncate(str(v)) if v is not None else "" for v in row])
+                table.add_row(
+                    *[
+                        escape(self._truncate(str(v))) if v is not None else ""
+                        for v in row
+                    ]
+                )
 
         if self.truncated:
             table.add_row(*["..." for _ in lf.collect_schema().names()])

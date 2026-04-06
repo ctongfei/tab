@@ -33,6 +33,7 @@ nav:
   - 'Introduction': 'index.md'
   - 'Configuration': 'configuration.md'
   - 'Cloud support': 'cloud.md'
+  - 'Databases': 'databases.md'
   - 'CLI reference': 'cli-ref.md'
 
 watch:

@@ -110,11 +110,15 @@ class TableReader:
             polars_uri = self.backend.normalize_for_polars(file_info.url)
             storage_options = self.backend.storage_options(file_info.url)
             window_size = remaining_skip + remaining_take
-            batch = (
-                self.format.scan(polars_uri, storage_options=storage_options)
-                .slice(0, window_size)
-                .collect()
-            )
+            if self.format.needs_opener():
+                lf = self.format.scan(
+                    polars_uri,
+                    storage_options=storage_options,
+                    opener=self.backend.open,
+                )
+            else:
+                lf = self.format.scan(polars_uri, storage_options=storage_options)
+            batch = lf.slice(0, window_size).collect()
 
             if empty_frame is None:
                 empty_frame = batch.clear()
@@ -144,16 +148,27 @@ class TableReader:
         return pl.DataFrame().lazy()
 
     def _resolve_sources(self, url: str) -> list[FileInfo]:
+        source_url = self.format.source_url(url)
         extension = self.format.extension()
-        if has_glob_pattern(url):
-            logger.debug(f"Resolving glob input for .{extension} files: {url}")
-            files = list(self.backend.list_files(url, extension))
-        elif self.backend.is_directory(url):
-            logger.debug(f"Resolving directory input for .{extension} files: {url}")
-            files = list(self.backend.list_files(url, extension))
+        if self.format.supports_multi_file() is False:
+            if has_glob_pattern(source_url):
+                raise ValueError(
+                    f"{extension} input must reference a single file as {{url}}#{{table_name}}"
+                )
+            if self.backend.is_directory(source_url):
+                raise ValueError(
+                    f"{extension} input must reference a single file as {{url}}#{{table_name}}"
+                )
+
+        if has_glob_pattern(source_url):
+            logger.debug(f"Resolving glob input for .{extension} files: {source_url}")
+            files = list(self.backend.list_files(source_url, extension))
+        elif self.backend.is_directory(source_url):
+            logger.debug(f"Resolving directory input for .{extension} files: {source_url}")
+            files = list(self.backend.list_files(source_url, extension))
         else:
-            logger.debug(f"Resolving single-file input: {url}")
-            return [FileInfo(url=url, size=self.backend.size(url))]
+            logger.debug(f"Resolving single-file input: {source_url}")
+            return [FileInfo(url=url, size=self.backend.size(source_url))]
 
         if not files:
             raise ValueError(f"No {extension} files found in {url}")
@@ -161,9 +176,20 @@ class TableReader:
         return files
 
     def _scan_file(self, url: str) -> pl.LazyFrame:
-        polars_uri = self.backend.normalize_for_polars(url)
-        storage_options = self.backend.storage_options(url)
-        return self.format.scan(polars_uri, storage_options=storage_options)
+        source_url = self.format.source_url(url)
+        input_url = (
+            self.backend.normalize_for_polars(source_url)
+            if self.format.uses_normalized_url()
+            else url
+        )
+        storage_options = self.backend.storage_options(source_url)
+        if self.format.needs_opener():
+            return self.format.scan(
+                input_url,
+                storage_options=storage_options,
+                opener=self.backend.open,
+            )
+        return self.format.scan(input_url, storage_options=storage_options)
 
     def _scan_files(self, files: list[FileInfo]) -> pl.LazyFrame:
         if len(files) == 1:
@@ -175,9 +201,24 @@ class TableReader:
 
     def schema(self, url: str) -> TableSchema:
         url = self._resolve_sources(url)[0].url
-        polars_uri = self.backend.normalize_for_polars(url)
-        storage_options = self.backend.storage_options(url)
-        columns = self.format.collect_schema(polars_uri, storage_options=storage_options)
+        source_url = self.format.source_url(url)
+        input_url = (
+            self.backend.normalize_for_polars(source_url)
+            if self.format.uses_normalized_url()
+            else url
+        )
+        storage_options = self.backend.storage_options(source_url)
+        if self.format.needs_opener():
+            columns = self.format.collect_schema(
+                input_url,
+                storage_options=storage_options,
+                opener=self.backend.open,
+            )
+        else:
+            columns = self.format.collect_schema(
+                input_url,
+                storage_options=storage_options,
+            )
         return TableSchema(columns=columns)
 
     def summary(self, url: str) -> TableSummary:
@@ -187,14 +228,29 @@ class TableReader:
         return self._summary_multi_source(url, files)
 
     def _summary_single(self, file_info: FileInfo) -> TableSummary:
-        polars_uri = self.backend.normalize_for_polars(file_info.url)
-        storage_options = self.backend.storage_options(file_info.url)
+        source_url = self.format.source_url(file_info.url)
+        input_url = (
+            self.backend.normalize_for_polars(source_url)
+            if self.format.uses_normalized_url()
+            else file_info.url
+        )
+        storage_options = self.backend.storage_options(source_url)
         num_rows = self.format.count_rows(
             file_info.url,
             storage_options=storage_options,
             opener=self.backend.open,
         )
-        schema = self.format.collect_schema(polars_uri, storage_options=storage_options)
+        if self.format.needs_opener():
+            schema = self.format.collect_schema(
+                input_url,
+                storage_options=storage_options,
+                opener=self.backend.open,
+            )
+        else:
+            schema = self.format.collect_schema(
+                input_url,
+                storage_options=storage_options,
+            )
         num_columns = len(schema)
         extra = self.format.extra_summary(file_info.url)
         return TableSummary(
@@ -282,9 +338,24 @@ class TableReader:
         file_size += file_info.size
         num_rows += row_count
 
-        polars_uri = self.backend.normalize_for_polars(file_info.url)
-        storage_options = self.backend.storage_options(file_info.url)
-        schema = self.format.collect_schema(polars_uri, storage_options=storage_options)
+        source_url = self.format.source_url(file_info.url)
+        input_url = (
+            self.backend.normalize_for_polars(source_url)
+            if self.format.uses_normalized_url()
+            else file_info.url
+        )
+        storage_options = self.backend.storage_options(source_url)
+        if self.format.needs_opener():
+            schema = self.format.collect_schema(
+                input_url,
+                storage_options=storage_options,
+                opener=self.backend.open,
+            )
+        else:
+            schema = self.format.collect_schema(
+                input_url,
+                storage_options=storage_options,
+            )
         current_signature = tuple((name, str(dtype)) for name, dtype in schema)
         if schema_signature is None:
             schema_signature = current_signature
@@ -302,7 +373,8 @@ class TableReader:
         return file_size, num_rows, schema_signature
 
     def _count_rows_for_summary(self, url: str) -> int:
-        storage_options = self.backend.storage_options(url)
+        source_url = self.format.source_url(url)
+        storage_options = self.backend.storage_options(source_url)
         return self.format.count_rows(
             url,
             storage_options=storage_options,
