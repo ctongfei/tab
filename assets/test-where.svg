@@ -1,4 +1,4 @@
-2026-04-04 01:24:15.794 | DEBUG    | tab_cli.config:load_config_file:47 - No config file found at /home/tongfei/.config/tab/config.json; using built-in defaults
+2026-04-05 22:04:53.128 | DEBUG    | tab_cli.config:load_config_file:47 - No config file found at /home/tongfei/.config/tab/config.json; using built-in defaults
 <svg class="rich-terminal" viewBox="0 0 994 196.39999999999998" xmlns="http://www.w3.org/2000/svg">
     <!-- Generated with Rich https://www.textualize.io -->
     <style>

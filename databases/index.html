@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../configuration/">
+        <link rel="prev" href="../cloud/">
       
       
-        <link rel="next" href="../databases/">
+        <link rel="next" href="../cli-ref/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Cloud support - tab</title>
+        <title>Databases - tab</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cloud-support" class="md-skip">
+        <a href="#databases" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Cloud support
+              Databases
             
           </span>
         </div>
@@ -264,6 +264,26 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cloud support
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -280,7 +300,7 @@
           
   
   <span class="md-ellipsis">
-    Cloud support
+    Databases
   </span>
   
 
@@ -291,7 +311,7 @@
         
   
   <span class="md-ellipsis">
-    Cloud support
+    Databases
   </span>
   
 
@@ -313,42 +333,72 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#aws-s3" class="md-nav__link">
+  <a href="#install" class="md-nav__link">
     <span class="md-ellipsis">
-      AWS S3
+      Install
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#azure-blob-storage" class="md-nav__link">
+  <a href="#input-syntax" class="md-nav__link">
     <span class="md-ellipsis">
-      Azure Blob Storage
+      Input Syntax
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Azure Blob Storage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#interpretation-of-az-urls" class="md-nav__link">
-    <span class="md-ellipsis">
-      Interpretation of az:// URLs
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#google-cloud-storage" class="md-nav__link">
+  <a href="#sqlite" class="md-nav__link">
     <span class="md-ellipsis">
-      Google Cloud Storage
+      SQLite
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#duckdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      DuckDB
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-and-remote-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Local And Remote Files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supported Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Behavior
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
     </span>
   </a>
   
@@ -358,26 +408,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../databases/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Databases
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -429,42 +459,72 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#aws-s3" class="md-nav__link">
+  <a href="#install" class="md-nav__link">
     <span class="md-ellipsis">
-      AWS S3
+      Install
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#azure-blob-storage" class="md-nav__link">
+  <a href="#input-syntax" class="md-nav__link">
     <span class="md-ellipsis">
-      Azure Blob Storage
+      Input Syntax
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Azure Blob Storage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#interpretation-of-az-urls" class="md-nav__link">
-    <span class="md-ellipsis">
-      Interpretation of az:// URLs
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#google-cloud-storage" class="md-nav__link">
+  <a href="#sqlite" class="md-nav__link">
     <span class="md-ellipsis">
-      Google Cloud Storage
+      SQLite
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#duckdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      DuckDB
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-and-remote-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Local And Remote Files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supported Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Behavior
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
     </span>
   </a>
   
@@ -488,88 +548,87 @@
   
 
 
-<h1 id="cloud-support">Cloud support<a class="headerlink" href="#cloud-support" title="Permanent link">&para;</a></h1>
-<p><code>tab</code> supports directly reading tabular data files or directories from cloud storage:</p>
-<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>view<span class="w"> </span>s3://<span class="nv">$bucket</span>/<span class="nv">$path</span>
-tab<span class="w"> </span>view<span class="w"> </span>gs://<span class="nv">$bucket</span>/<span class="nv">$path</span>
-tab<span class="w"> </span>view<span class="w"> </span>az://<span class="nv">$container</span>/<span class="nv">$path</span>
-tab<span class="w"> </span>view<span class="w"> </span>abfss://<span class="nv">$container</span>@<span class="nv">$account</span>.dfs.core.windows.net/<span class="nv">$path</span>
+<h1 id="databases">Databases<a class="headerlink" href="#databases" title="Permanent link">&para;</a></h1>
+<p><code>tab</code> can read SQLite and DuckDB tables as tabular input.</p>
+<h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
+<p>Database support is optional:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;tab-cli[sqlite]&#39;</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;tab-cli[duckdb]&#39;</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;tab-cli[all]&#39;</span>
 </code></pre></div>
-<p>Cloud paths may also use glob patterns:</p>
-<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>view<span class="w"> </span><span class="s1">&#39;s3://$bucket/path/date=*/*.parquet&#39;</span>
-tab<span class="w"> </span>view<span class="w"> </span><span class="s1">&#39;gs://$bucket/path/date=2026-01-*/*&#39;</span>
-tab<span class="w"> </span>summary<span class="w"> </span><span class="s1">&#39;az://$container/path/date=*/*.jsonl&#39;</span>
+<p>If a dependency is missing, <code>tab</code> will raise an error telling you which extra to install.</p>
+<h2 id="input-syntax">Input Syntax<a class="headerlink" href="#input-syntax" title="Permanent link">&para;</a></h2>
+<p>SQLite and DuckDB input use this form:</p>
+<div class="highlight"><pre><span></span><code>{url}#{table_name}
 </code></pre></div>
-<p>Install all optional integrations with:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;tab-cli[all]&#39;</span>
+<p>The <code>#table_name</code> suffix is required.</p>
+<h2 id="sqlite">SQLite<a class="headerlink" href="#sqlite" title="Permanent link">&para;</a></h2>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>view<span class="w"> </span>data.db#users
+tab<span class="w"> </span>schema<span class="w"> </span>data.sqlite#events
+tab<span class="w"> </span>summary<span class="w"> </span>data.sqlite3#measurements
 </code></pre></div>
-<h2 id="aws-s3">AWS S3<a class="headerlink" href="#aws-s3" title="Permanent link">&para;</a></h2>
-<p>Authentication methods (in order):</p>
-<ol>
-<li><strong>Environment variables</strong>: <code>AWS_ACCESS_KEY_ID</code>, <code>AWS_SECRET_ACCESS_KEY</code>, <code>AWS_SESSION_TOKEN</code></li>
-<li><strong>Profile</strong>: <code>AWS_PROFILE</code> or default — handles <code>~/.aws/credentials</code>, SSO, assume role, instance metadata</li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="c1"># Option 1: Set credentials directly</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span>...
-<span class="nb">export</span><span class="w"> </span><span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span>...
-
-<span class="c1"># Option 2: Use a profile</span>
-aws<span class="w"> </span>configure<span class="w">              </span><span class="c1"># static keys</span>
-aws<span class="w"> </span>sso<span class="w"> </span>login<span class="w">              </span><span class="c1"># SSO authentication</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">AWS_PROFILE</span><span class="o">=</span>my-profile
-</code></pre></div>
-<h2 id="azure-blob-storage">Azure Blob Storage<a class="headerlink" href="#azure-blob-storage" title="Permanent link">&para;</a></h2>
-<p>Authentication methods (in order):</p>
-<ol>
-<li><strong>Connection string</strong>: <code>AZURE_STORAGE_CONNECTION_STRING</code></li>
-<li><strong>Account key</strong>: <code>AZURE_STORAGE_KEY</code></li>
-<li><strong>SAS token</strong>: <code>AZURE_STORAGE_SAS_TOKEN</code></li>
-<li><strong>Azure AD / RBAC</strong>: <code>DefaultAzureCredential</code></li>
-<li><strong>Azure CLI</strong>: Key fetched via <code>az storage account keys list</code></li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="c1"># Option 1: Connection string</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_STORAGE_CONNECTION_STRING</span><span class="o">=</span><span class="s2">&quot;DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...&quot;</span>
-
-<span class="c1"># Option 2: Account key</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_STORAGE_ACCOUNT</span><span class="o">=</span>myaccount
-<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_STORAGE_KEY</span><span class="o">=</span>...
-
-<span class="c1"># Option 3: SAS token</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_STORAGE_ACCOUNT</span><span class="o">=</span>myaccount
-<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_STORAGE_SAS_TOKEN</span><span class="o">=</span><span class="s2">&quot;?sv=2022-11-02&amp;ss=...&quot;</span>
-
-<span class="c1"># Option 4: Azure AD (requires RBAC role: Storage Blob Data Reader)</span>
-az<span class="w"> </span>login
-
-<span class="c1"># Option 5: CLI fallback (requires ARM access)</span>
-az<span class="w"> </span>login
-</code></pre></div>
-<h4 id="interpretation-of-az-urls">Interpretation of <code>az://</code> URLs<a class="headerlink" href="#interpretation-of-az-urls" title="Permanent link">&para;</a></h4>
-<p>The interpretation of the <code>az://</code> URL authority (the part between <code>az://</code> and the first <code>/</code>) can be configured with the <code>--az-url-authority-is-account</code> flag.</p>
-<p>Two interpretations are supported:</p>
+<p>SQLite file extension inference supports:</p>
 <ul>
-<li><code>az://$container/$path</code> - the authority is the container name (default adlfs behavior)</li>
-<li><code>az://$account/$container/$path</code> - the authority is the storage account name</li>
+<li><code>.db</code></li>
+<li><code>.sqlite</code></li>
+<li><code>.sqlite3</code></li>
 </ul>
-<p>The first form is consistent with <code>s3://</code> and <code>gs://</code> URLs, but requires the <code>AZURE_STORAGE_ACCOUNT</code> environment variable to be set.
-The second form requires the <code>--az-url-authority-is-account</code> flag. </p>
-<h2 id="google-cloud-storage">Google Cloud Storage<a class="headerlink" href="#google-cloud-storage" title="Permanent link">&para;</a></h2>
-<p>Authentication methods (in order):</p>
-<ol>
-<li><strong><code>GOOGLE_APPLICATION_CREDENTIALS</code></strong>: Path to service account JSON</li>
-<li><strong>ADC file</strong>: <code>~/.config/gcloud/application_default_credentials.json</code></li>
-<li><strong>gcloud CLI</strong>: Token from <code>gcloud auth print-access-token</code></li>
-<li><strong><code>google.auth.default()</code></strong>: Default credential resolution</li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="c1"># Option 1: Service account</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">GOOGLE_APPLICATION_CREDENTIALS</span><span class="o">=</span>/path/to/service-account.json
-
-<span class="c1"># Option 2: User credentials (ADC)</span>
-gcloud<span class="w"> </span>auth<span class="w"> </span>application-default<span class="w"> </span>login
-
-<span class="c1"># Option 3: CLI login (fallback)</span>
-gcloud<span class="w"> </span>auth<span class="w"> </span>login
+<h2 id="duckdb">DuckDB<a class="headerlink" href="#duckdb" title="Permanent link">&para;</a></h2>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>view<span class="w"> </span>data.duckdb#users
+tab<span class="w"> </span>schema<span class="w"> </span>warehouse.duckdb#events
+tab<span class="w"> </span>summary<span class="w"> </span>analytics.ddb#measurements
 </code></pre></div>
+<p>DuckDB file extension inference supports:</p>
+<ul>
+<li><code>.duckdb</code></li>
+<li><code>.ddb</code></li>
+</ul>
+<h2 id="local-and-remote-files">Local And Remote Files<a class="headerlink" href="#local-and-remote-files" title="Permanent link">&para;</a></h2>
+<p>Both SQLite and DuckDB input work with any storage backend supported by <code>tab</code>.</p>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>view<span class="w"> </span>/tmp/data.db#users
+tab<span class="w"> </span>view<span class="w"> </span>s3://bucket/path/data.db#users
+tab<span class="w"> </span>view<span class="w"> </span>gs://bucket/path/data.sqlite#users
+tab<span class="w"> </span>view<span class="w"> </span>az://container/path/data.sqlite3#users
+
+tab<span class="w"> </span>view<span class="w"> </span>/tmp/data.duckdb#users
+tab<span class="w"> </span>view<span class="w"> </span>s3://bucket/path/data.duckdb#users
+tab<span class="w"> </span>view<span class="w"> </span>gs://bucket/path/data.ddb#users
+tab<span class="w"> </span>view<span class="w"> </span>az://container/path/data.duckdb#users
+</code></pre></div>
+<p>For local files, <code>tab</code> queries the database directly.</p>
+<p>For remote files, <code>tab</code> downloads the database file to a temporary local file and then queries it with Polars.</p>
+<h2 id="supported-commands">Supported Commands<a class="headerlink" href="#supported-commands" title="Permanent link">&para;</a></h2>
+<p>SQLite and DuckDB are supported as input for:</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>view<span class="w"> </span>data.db#users
+tab<span class="w"> </span>schema<span class="w"> </span>data.db#users
+tab<span class="w"> </span>summary<span class="w"> </span>data.db#users
+tab<span class="w"> </span>cat<span class="w"> </span>data.db#users<span class="w"> </span>-o<span class="w"> </span>csv
+tab<span class="w"> </span>convert<span class="w"> </span>data.db#users<span class="w"> </span>output.jsonl<span class="w"> </span>-o<span class="w"> </span>jsonl
+
+tab<span class="w"> </span>view<span class="w"> </span>data.duckdb#users
+tab<span class="w"> </span>schema<span class="w"> </span>data.duckdb#users
+tab<span class="w"> </span>summary<span class="w"> </span>data.duckdb#users
+tab<span class="w"> </span>cat<span class="w"> </span>data.duckdb#users<span class="w"> </span>-o<span class="w"> </span>csv
+tab<span class="w"> </span>convert<span class="w"> </span>data.duckdb#users<span class="w"> </span>output.jsonl<span class="w"> </span>-o<span class="w"> </span>jsonl
+</code></pre></div>
+<h2 id="output-behavior">Output Behavior<a class="headerlink" href="#output-behavior" title="Permanent link">&para;</a></h2>
+<p>SQLite and DuckDB are input-only.</p>
+<p><code>tab</code> does not write SQLite or DuckDB output, so commands that need a streamed output format must use <code>-o</code> explicitly:</p>
+<div class="highlight"><pre><span></span><code>tab<span class="w"> </span>cat<span class="w"> </span>data.db#users<span class="w"> </span>-o<span class="w"> </span>csv
+tab<span class="w"> </span>cat<span class="w"> </span>data.db#users<span class="w"> </span>-o<span class="w"> </span>jsonl
+
+tab<span class="w"> </span>cat<span class="w"> </span>data.duckdb#users<span class="w"> </span>-o<span class="w"> </span>csv
+tab<span class="w"> </span>cat<span class="w"> </span>data.duckdb#users<span class="w"> </span>-o<span class="w"> </span>jsonl
+</code></pre></div>
+<p>This is required because SQLite and DuckDB are database containers, not streamable stdout formats.</p>
+<h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Database input must reference a single file, not a directory or glob.</li>
+<li>The table name is treated as a table identifier, not a free-form SQL query.</li>
+</ul>
 
 
 
