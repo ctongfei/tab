@@ -122,6 +122,7 @@ def main_callback(
     ] = None,
 ) -> None:
     """Global options for tab_cli CLI."""
+    logger.remove()
     loaded_config = load_config_file()
     effective_config = loaded_config
 

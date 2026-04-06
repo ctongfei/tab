@@ -100,5 +100,5 @@ Options:
 
 | Option                  | Description                                                                                                                  |
 |-------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| `--az-url-authority-is-account` | Interpret az:// URL authority as storage account name instead of container name. See [azure.md](Azure) for more information. |
-| `--log-level`               | Log level from `{DEBUG, INFO, WARNING, ERROR, CRITICAL}`. If omitted, uses `log_level` from config.                         |
+| `--az-url-authority-is-account` | Interpret az:// URL authority as storage account name instead of container name. See [Cloud](cloud.md) for more information. |
+| `--log-level`               | Log level from `{DEBUG, INFO, WARNING, ERROR, CRITICAL}`. If omitted, uses `log_level` from config.                          |

@@ -111,6 +111,18 @@ class TestConfigFile:
         assert "Invalid value" in result.output
         assert "Invalid log level 'NOPE'" in result.output
 
+    def test_missing_config_does_not_emit_debug_log_when_cli_log_level_is_error(self, tmp_path):
+        missing_cfg = tmp_path / "missing.json"
+
+        with patch(
+            "tab_cli.cli.load_config_file",
+            side_effect=lambda: load_config_file(missing_cfg),
+        ):
+            result = runner.invoke(app, ["--log-level", "ERROR", "view", TEST_CSV])
+
+        assert result.exit_code == 0
+        assert "No config file found" not in result.output
+
     def test_view_uses_default_max_cell_length_from_config(self, tmp_path):
         cfg = tmp_path / "config.json"
         cfg.write_text(json.dumps({"max_cell_length": 5}))
